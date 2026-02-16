@@ -7,6 +7,7 @@ out/
 
 # Gradle wrapper logs
 gradle-app.setting
+build_output.txt
 
 # =========================
 # Minecraft run/dev folders
