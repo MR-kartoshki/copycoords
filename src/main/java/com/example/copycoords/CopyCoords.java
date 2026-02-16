@@ -51,7 +51,7 @@ public class CopyCoords implements ClientModInitializer {
         if (config.copyToClipboard) {
             try {
                 // Use Windows clip.exe to copy to system clipboard
-                Process process = Runtime.getRuntime().exec("cmd.exe /c echo " + coordString + " | clip.exe");
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + coordString + " | clip.exe"});
                 int exitCode = process.waitFor();
                 if (exitCode == 0) {
                     Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
