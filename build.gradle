@@ -82,6 +82,7 @@ processResources {
 
 
 import java.util.Properties
+import org.gradle.api.GradleException
 
 def bumpVersion(String part) {
     def propsFile = file("gradle.properties")

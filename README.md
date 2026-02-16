@@ -44,7 +44,7 @@ MIT License - See LICENSE file for details
 ## Author
 
 - MR-Kartoshki on GitHub
-- freddy._.fazbear on discord
+- freddy._.fazbear on Discord
 - freddyfazbear0000 on CurseForge
 - MR-kartoshki on Modrinth
-#### (feel free to message me on discord)
+#### (feel free to message me on Discord)
