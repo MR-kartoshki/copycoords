@@ -1,71 +1,64 @@
-# Ignore everything generated, built, or environment-specific that isn't source
-
-## Gradle
+# Gradle / Java build
 .gradle/
-/build/
-/out/
-/.gradle-test-kit/
+build/
+out/
+target/
+*.class
 
-## Gradle wrapper caches (do not ignore the wrapper jar itself)
-gradle/wrapper/dists/
-gradle/wrapper/gradle-wrapper.properties
-!/gradle/wrapper/gradle-wrapper.jar
+# Fabric Loom / Minecraft dev runtime
+run/
+logs/
+crash-reports/
+loom-cache/
 
-## Wrapper scripts (keep these tracked)
-!gradlew
-!gradlew.bat
-
-## IDEs
+# IDEs
 .idea/
 *.iml
 *.ipr
 *.iws
 .vscode/
 
-## Eclipse
+# Eclipse
 .classpath
 .project
 .settings/
+bin/
+*.launch
 
-## Build outputs / distributions
-/dist/
-/tmp/
-/target/
-*.jar
-*.war
-*.ear
+# Gradle wrapper (keep wrapper JAR + properties tracked)
+gradle/wrapper/dists/
 
-## Java
-*.class
-*.log
-hs_err_pid*
-
-## OS files
+# OS junk
 .DS_Store
 Thumbs.db
 Desktop.ini
-~$*
 
-## Editor temporary files
+# Editor / temp
 *~
 *.swp
 *.swo
 *.bak
 *.tmp
 
-## Runtime files
-logs/
-crash-reports/
-scripts/
+# JVM crash logs
+hs_err_pid*
 
-## User, local, and sensitive
+# Local-only / secrets
 local.properties
 secrets.properties
 gradle.properties.local
+.env
+.env.*
 *.keystore
 
-## OneDrive / cloud sync metadata
-.DS_Store?
-desktop.ini
+# Build artifacts (avoid committing built jars)
+build/libs/
+*.jar
+*.war
+*.ear
 
-# Keep source and project files tracked (implicit): src/, build.gradle, settings.gradle, gradle/, README.md, LICENSE
+# Keep Gradle wrapper files and scripts
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
