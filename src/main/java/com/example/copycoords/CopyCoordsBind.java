@@ -8,22 +8,15 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
-/**
- * Registers and handles keybindings for the CopyCoords mod.
- * Allows players to copy coordinates with a hotkey (default: C).
- */
 public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
 
     public static void register() {
-        // Register the keymapping under the CopyCoords category so it appears
-        // grouped with other CopyCoords controls at the bottom of the keybinds list.
         KeyMapping.Category copyCategory = KeyMapping.Category.register(Identifier.tryParse("copycoords:copycoords"));
         copyKeyBinding = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C, copyCategory)
         );
 
-        // Listen for key presses on the client tick.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (copyKeyBinding.consumeClick()) {
                 executeKeybindCopy();
@@ -31,9 +24,6 @@ public class CopyCoordsBind {
         });
     }
 
-    /**
-     * Executes the copy coordinates action when the keybind is pressed.
-     */
     private static void executeKeybindCopy() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) {
@@ -45,7 +35,6 @@ public class CopyCoordsBind {
         int z = minecraft.player.blockPosition().getZ();
         String coordString = x + " " + y + " " + z;
 
-        // Copy to clipboard
         try {
             Process process = Runtime.getRuntime().exec("cmd.exe /c echo " + coordString + " | clip.exe");
             process.waitFor();

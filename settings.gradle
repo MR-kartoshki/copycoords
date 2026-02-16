@@ -1,11 +1,6 @@
-// Configure where Gradle should look for plugins. Without this, Loom isn't found
-// in Gradle's default plugin portal. The Fabric Maven repository hosts the
-// Loom plugins.
-pluginManagement {
+PluginManagement {
     repositories {
-        // Repository for Fabric MC plugins (including Loom).
         maven { url = 'https://maven.fabricmc.net/' }
-        // Gradle Plugin Portal is also searched for other plugins.
         gradlePluginPortal()
     }
 }

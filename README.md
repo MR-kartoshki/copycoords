@@ -17,7 +17,7 @@ A simple Fabric mod for Minecraft 1.21.11 that adds a `/copycoords` command to q
    - [Fabric API](https://modrinth.com/mod/fabric-api)
    - [Cloth Config](https://modrinth.com/mod/cloth-config)
    - [Mod Menu](https://modrinth.com/mod/modmenu)
-3. Place `copycoords-1.0.0.jar` in your `.minecraft/mods` folder
+3. Place `copycoords-x.x.x.jar` in your `.minecraft/mods` folder
 
 ## Usage
 
