@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "copycoords",
-  "version": "1.0.0",
+  "version": "${version}",
   "name": "Copy Coords",
   "description": "A small client‑side mod adding a /copycoords command that prints your coordinates and optionally copies them to your clipboard.",
   "authors": ["freddy._.fazbear"],

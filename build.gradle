@@ -8,13 +8,13 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.example'
-version = '1.0.0'
+group = project.maven_group
+version = project.mod_version
 
 // Gradle 9 removed the deprecated 'archivesBaseName' property. Use the 'base' plugin's
 // archivesName property instead to set the filename prefix for generated JARs.
 base {
-    archivesName = 'copycoords'
+    archivesName = project.archives_base_name
 }
 
 repositories {
@@ -103,3 +103,50 @@ publishing {
         mavenLocal()
     }
 }
+
+// Inject mod version into resources (fabric.mod.json)
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+// Version bump tasks
+import java.util.Properties
+
+def bumpVersion(String part) {
+    def propsFile = file("gradle.properties")
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+
+    def v = props.getProperty("mod_version") ?: "0.0.0"
+    def pieces = v.tokenize(".")*.toInteger()
+    while (pieces.size() < 3) pieces << 0
+
+    int major = pieces[0], minor = pieces[1], patch = pieces[2]
+
+    switch (part) {
+        case "major":
+            major++; minor = 0; patch = 0; break
+        case "minor":
+            minor++; patch = 0; break
+        case "patch":
+            patch++; break
+        default:
+            throw new GradleException("Unknown bump part: " + part)
+    }
+
+    def newV = "${major}.${minor}.${patch}"
+    props.setProperty("mod_version", newV)
+
+    propsFile.withOutputStream { os ->
+        props.store(os, "Updated by Gradle bump task")
+    }
+
+    println("Bumped mod_version: ${v} -> ${newV}")
+}
+
+tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
+tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
+tasks.register("bumpMajor") { doLast { bumpVersion("major") } }

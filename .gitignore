@@ -1,64 +1,70 @@
-# =========================
-# Gradle
-# =========================
+# Ignore everything generated, built, or environment-specific that isn't source
+
+## Gradle
 .gradle/
-build/
-out/
+/build/
+/out/
+/.gradle-test-kit/
 
-# Gradle wrapper logs
-gradle-app.setting
-build_output.txt
+## Gradle wrapper caches (do not ignore the wrapper jar itself)
+gradle/wrapper/dists/
+gradle/wrapper/gradle-wrapper.properties
+!/gradle/wrapper/gradle-wrapper.jar
 
-# =========================
-# Minecraft run/dev folders
-# =========================
-run/
-logs/
-crash-reports/
-saves/
-server.properties
-options.txt
-usercache.json
-usernamecache.json
+## Wrapper scripts (keep these tracked)
+!gradlew
+!gradlew.bat
 
-# =========================
-# VS Code
-# =========================
-.vscode/
-
-# =========================
-# IntelliJ (just in case)
-# =========================
+## IDEs
 .idea/
 *.iml
+*.ipr
+*.iws
+.vscode/
 
-# =========================
-# Eclipse (just in case)
-# =========================
+## Eclipse
 .classpath
 .project
 .settings/
 
-# =========================
-# OS files (Windows + macOS)
-# =========================
-Thumbs.db
-.DS_Store
+## Build outputs / distributions
+/dist/
+/tmp/
+/target/
+*.jar
+*.war
+*.ear
 
-# =========================
-# Java
-# =========================
-*.log
+## Java
 *.class
+*.log
+hs_err_pid*
 
-# =========================
-# Local dependency folder (only ignore if unused)
-# =========================
-libs/*.jar
+## OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+~$*
 
-# =========================
-# Temporary files
-# =========================
-*.tmp
-*.bak
+## Editor temporary files
+*~
 *.swp
+*.swo
+*.bak
+*.tmp
+
+## Runtime files
+logs/
+crash-reports/
+
+## User, local, and sensitive
+local.properties
+secrets.properties
+gradle.properties.local
+*.keystore
+
+## OneDrive / cloud sync metadata
+.DS_Store?
+desktop.ini
+
+# Keep source and project files tracked (implicit): src/, build.gradle, settings.gradle, gradle/, README.md, LICENSE
