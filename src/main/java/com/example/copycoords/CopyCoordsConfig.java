@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+// Manages configuration settings for the mod, including clipboard copy preferences
 public class CopyCoordsConfig {
 
     public boolean copyToClipboard = true;
@@ -16,10 +17,12 @@ public class CopyCoordsConfig {
 
     private static Path configPath;
 
+    // Load configuration from file or create default if not found
     public static CopyCoordsConfig load() {
         Path configDir = FabricLoader.getInstance().getConfigDir();
         configPath = configDir.resolve("copycoords.json");
 
+        // Try to read existing config file
         if (Files.exists(configPath)) {
             try {
                 String json = Files.readString(configPath);
@@ -32,18 +35,22 @@ public class CopyCoordsConfig {
             }
         }
 
+        // Create and save default config if file doesn't exist
         CopyCoordsConfig config = new CopyCoordsConfig();
         config.save();
         return config;
     }
 
+    // Save current configuration to file
     public void save() {
         if (configPath == null) {
             Path configDir = FabricLoader.getInstance().getConfigDir();
             configPath = configDir.resolve("copycoords.json");
         }
         try {
+            // Ensure config directory exists before writing
             Files.createDirectories(configPath.getParent());
+            // Convert config object to JSON and write to file
             String json = GSON.toJson(this);
             Files.writeString(configPath, json);
         } catch (IOException e) {
