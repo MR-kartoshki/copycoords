@@ -1,10 +1,12 @@
 package com.example.copycoords;
 
+import org.lwjgl.glfw.GLFW;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.resources.Identifier;
 
 /**
  * Registers and handles keybindings for the CopyCoords mod.
@@ -14,9 +16,11 @@ public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
 
     public static void register() {
-        // Create a KeyMapping with a default key of C and null category (uses default)
+        // Register the keymapping under the CopyCoords category so it appears
+        // grouped with other CopyCoords controls at the bottom of the keybinds list.
+        KeyMapping.Category copyCategory = KeyMapping.Category.register(Identifier.tryParse("copycoords:copycoords"));
         copyKeyBinding = KeyBindingHelper.registerKeyBinding(
-            new KeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C, null)
+            new KeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C, copyCategory)
         );
 
         // Listen for key presses on the client tick.

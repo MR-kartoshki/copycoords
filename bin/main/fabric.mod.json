@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "copycoords",
+  "version": "${version}",
+  "name": "Copy Coords",
+  "description": "A small client‑side mod adding a /copycoords command that prints your coordinates and optionally copies them to your clipboard.",
+  "authors": ["freddy._.fazbear"],
+  "license": "MIT",
+  "icon": "assets/copycoords/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.example.copycoords.CopyCoords"],
+    "modmenu": ["com.example.copycoords.CopyCoordsModMenuIntegration"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "1.21.11",
+    "fabric-api": ">=0.140.0+1.21.11",
+    "cloth-config": ">=11.0.0",
+    "modmenu": ">=9.0.0"
+  },
+  "suggests": {
+    "fabric-language-kotlin": ">=1.8.0"
+  }
+}
