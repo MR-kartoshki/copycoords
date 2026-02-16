@@ -1,0 +1,105 @@
+plugins {
+    // Use the Loom plugin for obfuscated Minecraft versions. The 1.15 branch
+    // of Loom targets Gradle 9.x and publishes variants compatible with the
+    // Gradle 9 plugin API. The older 1.14.x releases target Gradle 8.x and
+    // will cause variant mismatches when used on Gradle 9. 1.15.0-alpha.6
+    // is chosen here; update to a later 1.15.x release if available.
+    id 'net.fabricmc.fabric-loom-remap' version '1.15.0-alpha.6'
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+// Gradle 9 removed the deprecated 'archivesBaseName' property. Use the 'base' plugin's
+// archivesName property instead to set the filename prefix for generated JARs.
+base {
+    archivesName = 'copycoords'
+}
+
+repositories {
+    // The order of repositories matters; start with the Fabric and Mojang
+    // repositories so core dependencies like Minecraft and Fabric Loader can be
+    // resolved without issues. Gradle 9 deprecates the Groovy DSL syntax
+    // "url '…'"; instead assign the URL with the equals sign.
+    mavenCentral()
+    maven {
+        url = 'https://maven.fabricmc.net/'
+    }
+    maven {
+        // Mojang's repository for the Minecraft client/server JAR
+        url = 'https://libraries.minecraft.net/'
+    }
+    maven {
+        // Repository for Cloth Config, AutoConfig and other Shedaniel libraries
+        url = 'https://maven.shedaniel.me/'
+    }
+    maven {
+        // Repository for Modrinth hosted dependencies
+        url = 'https://api.modrinth.com/maven'
+    }
+    maven {
+        // Repository hosting snapshot builds (optional)
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+    maven {
+        // TerraformersMC repository is required for the Mod Menu mod
+        url = 'https://maven.terraformersmc.com/releases/'
+    }
+}
+
+dependencies {
+    // Fabric Loader and API matching Minecraft 1.21.11
+    // Tell Loom which Minecraft version to download. Without this, the
+    // MinecraftProvider will not be configured, causing "Configuration 'minecraft'
+    // has no dependencies" errors. The Mojang repository above is required to
+    // resolve this dependency.【109863188223212†L350-L361】
+    minecraft "com.mojang:minecraft:1.21.11"
+
+    // Use Mojang's official mappings. These mappings are necessary for the
+    // latest Fabric API and Loom versions when developing for Minecraft 1.21.11.
+    mappings loom.officialMojangMappings()
+
+    // Fabric loader and API versions matching the game version
+    modImplementation "net.fabricmc:fabric-loader:0.18.1"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.141.3+1.21.11"
+
+    // Cloth Config for configuration screens. 11.0.99 works on 1.21.x.
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:11.0.99"
+
+    // Mod Menu provides a button to access config screens from the mod list.
+    // 17.0.0-beta.2 is the version targeting Minecraft 1.21.11【224800211875391†L76-L88】.
+    modApi "com.terraformersmc:modmenu:17.0.0-beta.2"
+
+    // AutoConfig is no longer used in this project. The configuration system
+    // has been rewritten to use a simple JSON file backed by Gson and Cloth
+    // Config for the UI. Remove the outdated AutoConfig dependency to avoid
+    // unresolved artifact errors.
+    // modImplementation "com.github.queerbric:auto-config-updated-api:5.1.1"
+}
+
+// Configure Loom run tasks. Remove deprecated 'splitEnvironmentSourceSets' property
+// and use the default configuration for a client mod. The client run will
+// launch Minecraft using the mod's main source set.
+loom {
+    runs {
+        client {
+            client()
+            ideConfigGenerated = true
+            // Use the main source set for the client environment. In Loom 1.0+ the
+            // run configuration uses the 'source' property instead of 'sourceSet'.
+            source = sourceSets.main
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}

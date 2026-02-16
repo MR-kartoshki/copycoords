@@ -1,0 +1,63 @@
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+out/
+
+# Gradle wrapper logs
+gradle-app.setting
+
+# =========================
+# Minecraft run/dev folders
+# =========================
+run/
+logs/
+crash-reports/
+saves/
+server.properties
+options.txt
+usercache.json
+usernamecache.json
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# IntelliJ (just in case)
+# =========================
+.idea/
+*.iml
+
+# =========================
+# Eclipse (just in case)
+# =========================
+.classpath
+.project
+.settings/
+
+# =========================
+# OS files (Windows + macOS)
+# =========================
+Thumbs.db
+.DS_Store
+
+# =========================
+# Java
+# =========================
+*.log
+*.class
+
+# =========================
+# Local dependency folder (only ignore if unused)
+# =========================
+libs/*.jar
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.bak
+*.swp
