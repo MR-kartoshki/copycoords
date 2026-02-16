@@ -19,13 +19,12 @@ public class CopyCoordsBind {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (copyKeyBinding.consumeClick()) {
-                executeKeybindCopy();
+                executeKeybindCopy(client);
             }
         });
     }
 
-    private static void executeKeybindCopy() {
-        Minecraft minecraft = Minecraft.getInstance();
+    private static void executeKeybindCopy(Minecraft minecraft) {
         if (minecraft.player == null) {
             return;
         }

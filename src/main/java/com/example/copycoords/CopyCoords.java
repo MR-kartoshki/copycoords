@@ -1,15 +1,16 @@
 package com.example.copycoords;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.example.copycoords.CopyCoordsConfig;
 
 public class CopyCoords implements ClientModInitializer {
     public static CopyCoordsConfig config;
@@ -19,13 +20,13 @@ public class CopyCoords implements ClientModInitializer {
         config = CopyCoordsConfig.load();
         CopyCoordsBind.register();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            LiteralArgumentBuilder builder = ClientCommandManager.literal("copycoords");
+            LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal("copycoords");
             builder.executes(context -> executeCopyCoords(context));
             dispatcher.register(builder);
         });
     }
 
-    private int executeCopyCoords(CommandContext context) {
+    private int executeCopyCoords(CommandContext<FabricClientCommandSource> context) {
         Player player = Minecraft.getInstance().player;
         if (player == null) {
             Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.no_player"));
