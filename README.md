@@ -8,8 +8,8 @@ Whether you're pasting a location into chat, coordinating building projects acro
 
 - `/copycoords` — prints your current block coordinates in chat and can copy them to your system clipboard.
 - Keybind — press **C** (default) to copy your coordinates instantly.
-- `/convertcoords` — convert coordinates between the Overworld and the Nether.
-- Configurable — toggle automatic clipboard copying in Mod Menu.
+- `/convertcoords` — convert coordinates between the Overworld and the Nether, with optional clipboard copying.
+- Configurable — toggle automatic clipboard copying for both commands in Mod Menu.
 - Localized — supports translations for chat messages.
 
 ## Convert coordinates between dimensions
@@ -22,7 +22,7 @@ Use `/convertcoords [goal] [x] [y] [z]` to convert coordinates between Overworld
   - `/convertcoords nether 100 64 200` converts Overworld 100 64 200 → Nether (X/Z divided by 8).
   - `/convertcoords overworld ~ ~ ~` converts your current position from Nether → Overworld (X/Z multiplied by 8).
 
-Notes: Conversion uses the standard 8:1 X/Z scaling between Overworld and Nether. Y is preserved and rounded to the nearest block.
+Notes: Conversion uses the standard 8:1 X/Z scaling between Overworld and Nether. Y is preserved and rounded to the nearest block. Converted coordinates can be automatically copied to your clipboard (enabled by default).
 
 ## Usage
 
@@ -42,11 +42,15 @@ Config file: `%APPDATA%/.minecraft/config/copycoords.json`
 
 ```json
 {
-  "copyToClipboard": true
+  "copyToClipboard": true,
+  "copyConvertedToClipboard": true
 }
 ```
 
-Set `copyToClipboard` to `false` to only show coordinates in chat.
+- Set `copyToClipboard` to `false` to only show coordinates in chat (for `/copycoords` command).
+- Set `copyConvertedToClipboard` to `false` to only show converted coordinates in chat (for `/convertcoords` command).
+
+Both options can also be toggled in the Mod Menu configuration GUI.
 
 ## License
 

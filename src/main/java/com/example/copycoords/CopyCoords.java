@@ -157,6 +157,28 @@ public class CopyCoords implements ClientModInitializer {
 
         String out = ix + " " + iy + " " + iz;
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", out));
+
+        // Copy converted coordinates to clipboard if enabled in config
+        if (config.copyConvertedToClipboard) {
+            try {
+                // Use Windows clip.exe to copy to system clipboard
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + out + " | clip.exe"});
+                int exitCode = process.waitFor();
+                if (exitCode == 0) {
+                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
+                } else {
+                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", "clip.exe returned " + exitCode));
+                }
+            } catch (Exception e) {
+                // Handle clipboard copy errors gracefully
+                String errorMsg = e.getMessage();
+                if (errorMsg == null || errorMsg.isEmpty()) {
+                    errorMsg = e.getClass().getSimpleName();
+                }
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
+            }
+        }
+
         return Command.SINGLE_SUCCESS;
     }
 

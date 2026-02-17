@@ -12,6 +12,7 @@ import java.nio.file.Path;
 public class CopyCoordsConfig {
 
     public boolean copyToClipboard = true;
+    public boolean copyConvertedToClipboard = true;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 

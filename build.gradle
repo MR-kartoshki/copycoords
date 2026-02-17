@@ -3,6 +3,8 @@
 plugins {
     id 'net.fabricmc.fabric-loom-remap' version '1.15.0-alpha.6'
     id 'maven-publish'
+    id 'com.modrinth.minotaur' version '2.8.10'
+    id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0'
 }
 
 group = project.maven_group
@@ -118,3 +120,41 @@ def bumpVersion(String part) {
 tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
 tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
 tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
+
+// ===== Modrinth Publishing (Minotaur) =====
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "GzPkXb2a"
+    versionNumber = project.version.toString()
+    versionType = "release"  // or "beta" / "alpha"
+    uploadFile = tasks.remapJar
+    gameVersions = ["1.21.1"]  // Adjust to your supported versions
+    loaders = ["fabric"]
+    changelog = file("CHANGELOG.md").exists() ? file("CHANGELOG.md").text : ""
+}
+
+// ===== CurseForge Publishing =====
+curseforge {
+    apiToken = System.getenv("CURSEFORGE_API_TOKEN")
+
+    publications {
+        register("curseforge") {
+            projectId = "1463555"
+
+            artifacts.register("main") {
+                from(tasks.named("remapJar"))
+                displayName = "CopyCoords ${project.version}"
+                releaseType = "release"
+
+                changelog {
+                    format = "markdown"
+                    from(file("CHANGELOG.md"))
+                }
+            }
+
+            // Game version tags - adjust as needed
+            gameVersions.add("1.21.1")
+            gameVersions.add("Fabric")
+        }
+    }
+}

@@ -39,6 +39,15 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> CopyCoords.config.copyToClipboard = newValue)
                     .build());
 
+            // Add toggle option for copying converted coordinates
+            general.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Copy converted coordinates to clipboard"),
+                            CopyCoords.config.copyConvertedToClipboard)
+                    .setDefaultValue(true)
+                    .setTooltip(Component.literal("If enabled, the /convertcoords command will copy the converted coordinates to your system clipboard."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.copyConvertedToClipboard = newValue)
+                    .build());
+
             // Save config to file when changes are applied
             builder.setSavingRunnable(() -> CopyCoords.config.save());
 
