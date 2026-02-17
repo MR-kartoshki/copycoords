@@ -121,6 +121,24 @@ tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
 tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
 tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
 
+// Extract only the current version's changelog section
+def getCurrentChangelog() {
+    def changelog = file("CHANGELOG.md")
+    if (!changelog.exists()) return ""
+    
+    def lines = changelog.readLines()
+    def current = []
+    def started = false
+    
+    for (line in lines) {
+        if (line.startsWith("## [") && started) break
+        if (line.startsWith("## [")) started = true
+        if (started) current.add(line)
+    }
+    
+    return current.join("\n")
+}
+
 // ===== Modrinth Publishing (Minotaur) =====
 modrinth {
     token = System.getenv("MODRINTH_TOKEN")
@@ -130,7 +148,7 @@ modrinth {
     uploadFile = tasks.remapJar
     gameVersions = ["1.21.1"]  // Adjust to your supported versions
     loaders = ["fabric"]
-    changelog = file("CHANGELOG.md").exists() ? file("CHANGELOG.md").text : ""
+    changelog = getCurrentChangelog()
 }
 
 // ===== CurseForge Publishing =====
@@ -148,7 +166,7 @@ curseforge {
 
                 changelog {
                     format = "markdown"
-                    from(file("CHANGELOG.md"))
+                    content = getCurrentChangelog()
                 }
             }
         }
