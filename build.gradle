@@ -151,10 +151,6 @@ curseforge {
                     from(file("CHANGELOG.md"))
                 }
             }
-
-            // Game version tags - adjust as needed
-            gameVersions.add("1.21.1")
-            gameVersions.add("Fabric")
         }
     }
 }
