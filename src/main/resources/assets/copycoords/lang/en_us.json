@@ -10,6 +10,6 @@
   "message.copycoords.command.copied": "Copied coordinates to clipboard.",
   "message.copycoords.command.copy_failed": "Failed to copy coordinates to clipboard: %s",
   "message.copycoords.keybind.copied": "Copied coordinates to clipboard: %s",
-  "message.copycoords.keybind.failed": "Failed to copy coordinates to clipboard: %s"
-  ,"message.copycoords.command.converted": "Converted coordinates: %s"
+  "message.copycoords.keybind.failed": "Failed to copy coordinates to clipboard: %s",
+  "message.copycoords.command.converted": "Converted coordinates: %s"
 }
