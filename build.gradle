@@ -9,7 +9,15 @@ version = project.mod_version
 
 
 base {
-    archivesName = project.archives_base_name
+    archivesName = project.archives_base_name + "+1.21.11"
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = project.archives_base_name + "-" + project.mod_version + "+1.21.11.jar"
+}
+
+tasks.named('remapJar') {
+    archiveFileName = project.archives_base_name + "-" + project.mod_version + "+1.21.11.jar"
 }
 
 repositories {
