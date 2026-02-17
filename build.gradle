@@ -160,6 +160,7 @@ modrinth {
     gameVersions = ["1.21.1"]  // Adjust to your supported versions
     loaders = ["fabric"]
     changelog = getCurrentChangelog()
+    syncBodyFrom = file("README.md").text  // Sync README to Modrinth description
 }
 
 // ===== CurseForge Publishing =====

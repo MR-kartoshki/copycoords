@@ -34,7 +34,9 @@ jobs:
       - name: Publish to Modrinth
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: ./gradlew modrinth
+        run: |
+          ./gradlew modrinth
+          ./gradlew modrinthSyncBody
 
       - name: Publish to CurseForge
         env:
