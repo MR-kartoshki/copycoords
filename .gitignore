@@ -7,9 +7,13 @@ target/
 
 # Fabric Loom / Minecraft dev runtime
 run/
+minecraft/
 logs/
 crash-reports/
 loom-cache/
+remappedSrc/
+.fabric/
+*.log
 
 # IDEs
 .idea/
