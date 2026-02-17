@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "Copy Coords",
   "description": "A small client‑side mod adding a /copycoords command that prints your coordinates and optionally copies them to your clipboard.",
-  "authors": ["freddy._.fazbear"],
+  "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)","freddyfazbear0000 (CurseForge)","MR-Kartoshki (Modrinth)"],
   "license": "MIT",
   "icon": "assets/copycoords/icon.png",
   "environment": "client",
