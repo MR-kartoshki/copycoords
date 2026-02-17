@@ -7,6 +7,10 @@
   "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)","freddyfazbear0000 (CurseForge)","MR-Kartoshki (Modrinth)"],
   "license": "MIT",
   "icon": "assets/copycoords/icon.png",
+  "contact": {
+    "issues": "https://github.com/MR-kartoshki/copycoords/issues",
+    "homepage": "https://github.com/MR-kartoshki/copycoords"
+  },
   "environment": "client",
   "entrypoints": {
     "client": ["com.example.copycoords.CopyCoords"],
