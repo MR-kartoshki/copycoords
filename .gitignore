@@ -57,6 +57,7 @@ gradle.properties.local
 
 # Build artifacts (avoid committing built jars)
 build/libs/
+build/current-changelog.md
 *.jar
 *.war
 *.ear

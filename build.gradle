@@ -139,6 +139,17 @@ def getCurrentChangelog() {
     return current.join("\n")
 }
 
+// Task to write current changelog to file for GitHub Release
+tasks.register("writeCurrentChangelog") {
+    doLast {
+        def changelogContent = getCurrentChangelog()
+        def outputFile = file("build/current-changelog.md")
+        outputFile.parentFile.mkdirs()
+        outputFile.text = changelogContent
+        println("Current changelog written to ${outputFile.path}")
+    }
+}
+
 // ===== Modrinth Publishing (Minotaur) =====
 modrinth {
     token = System.getenv("MODRINTH_TOKEN")
