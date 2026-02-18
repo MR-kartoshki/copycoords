@@ -1,5 +1,7 @@
 // Hi :)
 
+import java.util.Properties
+
 plugins {
     id 'net.fabricmc.fabric-loom-remap' version '1.15.0-alpha.6'
     id 'maven-publish'
@@ -82,9 +84,6 @@ processResources {
 }
 
 
-import java.util.Properties
-import org.gradle.api.GradleException
-
 def bumpVersion(String part) {
     def propsFile = file("gradle.properties")
     def props = new Properties()
@@ -104,7 +103,7 @@ def bumpVersion(String part) {
         case "patch":
             patch++; break
         default:
-            throw new GradleException("Unknown bump part: " + part)
+            throw new IllegalArgumentException("Unknown bump part: " + part)
     }
 
     def newV = "${major}.${minor}.${patch}"
@@ -157,7 +156,7 @@ modrinth {
     versionNumber = project.version.toString()
     versionType = "release"  // or "beta" / "alpha"
     uploadFile = tasks.remapJar
-    gameVersions = ["1.21.1"]  // Adjust to your supported versions
+    gameVersions = ["1.21.11"]  // Adjust to your supported versions
     loaders = ["fabric"]
     changelog = getCurrentChangelog()
     syncBodyFrom = file("README.md").text  // Sync README to Modrinth description
@@ -175,6 +174,8 @@ curseforge {
                 from(tasks.named("remapJar"))
                 displayName = "CopyCoords ${project.version}"
                 releaseType = "release"
+                gameVersions = ["1.21.11"]
+                loaders = ["fabric"]
 
                 changelog {
                     format = "markdown"
