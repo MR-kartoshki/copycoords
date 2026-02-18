@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew writeCurrentChangelog --no-daemon
 
       - name: Publish to Modrinth
-        if: github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true'
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true')
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         run: ./gradlew publishAllToModrinth --no-daemon
