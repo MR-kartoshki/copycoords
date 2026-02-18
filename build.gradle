@@ -184,34 +184,6 @@ processResources {
     }
 }
 
-// Task to build for all versions
-task buildAllVersions {
-    doLast {
-        println "Building CopyCoords for all supported Minecraft versions..."
-        ext.gameVersions.keySet().each { version ->
-            println "Building for ${version}..."
-            exec {
-                commandLine "./gradlew.bat", "build", "-PMC_VERSION=${version}"
-            }
-        }
-        println "All versions built successfully!"
-    }
-}
-
-// Task to test all versions
-task testAllVersions {
-    doLast {
-        println "Testing CopyCoords for all supported Minecraft versions..."
-        ext.gameVersions.keySet().each { version ->
-            println "Testing for ${version}..."
-            exec {
-                commandLine "./gradlew.bat", "test", "-PMC_VERSION=${version}"
-            }
-        }
-        println "All versions tested successfully!"
-    }
-}
-
 // Version bump utility
 def bumpVersion(String part) {
     def propsFile = file("gradle.properties")
