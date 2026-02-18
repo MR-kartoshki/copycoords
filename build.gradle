@@ -267,8 +267,12 @@ modrinth {
 
 tasks.modrinth.dependsOn(tasks.remapJar)
 
-// ===== CurseForge Publishing =====
-// Each Stonecutter subproject uploads its own JAR for its MC version
+// ===== CurseForge Publishing (Disabled) =====
+// The CurseForge Gradle plugin's gameVersions requires GameVersion objects,
+// not plain strings, and the plugin doesn't provide an easy way to construct them.
+// For now, focus on Modrinth which works correctly.
+// To publish to CurseForge, use the web interface or a different approach.
+/*
 curseforge {
     apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
 
@@ -281,8 +285,6 @@ curseforge {
                 displayName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
                 releaseType = "release"
 
-                gameVersions.add(activeVersion)
-
                 changelog {
                     format = "markdown"
                     content = getCurrentChangelog()
@@ -291,6 +293,7 @@ curseforge {
         }
     }
 }
+*/
 
 // Default build behavior
 build.dependsOn remapJar

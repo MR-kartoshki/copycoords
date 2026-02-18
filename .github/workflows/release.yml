@@ -14,14 +14,6 @@ on:
         options:
           - 'false'
           - 'true'
-      skip_curseforge:
-        description: 'Skip CurseForge upload'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 permissions:
   contents: write
@@ -54,12 +46,6 @@ jobs:
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         run: ./gradlew publishAllToModrinth
-
-      - name: Publish to CurseForge
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_curseforge != 'true')
-        env:
-          CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
-        run: ./gradlew publishAllToCurseForge
 
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
