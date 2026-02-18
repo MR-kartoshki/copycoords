@@ -190,8 +190,7 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     displayName = "CopyCoords ${project.version}"
                     releaseType = "release"
 
-                    // The curseforge plugin expects a Set<GameVersion>, not plain strings.
-                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")]
+                    gameVersions = ["1.21.11"]
 
                     changelog {
                         format = "markdown"
