@@ -39,3 +39,21 @@ tasks.register("publishAllToModrinth") {
               ':1.21.10:modrinth',
               ':1.21.11:modrinth'
 }
+
+// Aggregate task: uploads all version JARs to CurseForge in one command
+tasks.register("publishAllToCurseForge") {
+    group = "publishing"
+    description = "Upload all Stonecutter version JARs to CurseForge"
+    dependsOn ':1.21:publishCurseforgePublicationToCurseForge',
+              ':1.21.1:publishCurseforgePublicationToCurseForge',
+              ':1.21.2:publishCurseforgePublicationToCurseForge',
+              ':1.21.3:publishCurseforgePublicationToCurseForge',
+              ':1.21.4:publishCurseforgePublicationToCurseForge',
+              ':1.21.5:publishCurseforgePublicationToCurseForge',
+              ':1.21.6:publishCurseforgePublicationToCurseForge',
+              ':1.21.7:publishCurseforgePublicationToCurseForge',
+              ':1.21.8:publishCurseforgePublicationToCurseForge',
+              ':1.21.9:publishCurseforgePublicationToCurseForge',
+              ':1.21.10:publishCurseforgePublicationToCurseForge',
+              ':1.21.11:publishCurseforgePublicationToCurseForge'
+}

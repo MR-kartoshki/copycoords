@@ -7,16 +7,13 @@ plugins {
     id 'dev.kikugie.stonecutter'
     id 'maven-publish'
     id 'com.modrinth.minotaur' version '2.8.10'
-    id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0' apply false
+    id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0'
 }
 
-// Conditionally apply CurseForge plugin
+// Conditionally apply CurseForge plugin (for potential future use cases)
+// Note: Plugin is unconditionally loaded above, config block always runs
 def requestedTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }
 def wantsCurseforge = requestedTasks.any { it.contains('curseforge') }
-
-if (wantsCurseforge || System.getenv('CURSEFORGE_API_TOKEN')) {
-    apply plugin: 'io.github.themrmilchmann.curseforge-publish'
-}
 
 // Version mapping for Minecraft versions and their associated dependencies
 ext.gameVersions = [
@@ -299,25 +296,24 @@ modrinth {
 tasks.modrinth.dependsOn(tasks.remapJar)
 
 // ===== CurseForge Publishing =====
-if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
-    curseforge {
-        apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
+// Each Stonecutter subproject uploads its own JAR for its MC version
+curseforge {
+    apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
 
-        publications {
-            register("curseforge") {
-                projectId = "1463555"
+    publications {
+        register("curseforge") {
+            projectId = "1463555"
 
-                artifacts.register("main") {
-                    from(tasks.named("remapJar"))
-                    displayName = "CopyCoords ${project.version}"
-                    releaseType = "release"
+            artifacts.register("main") {
+                from(tasks.named("remapJar"))
+                displayName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
+                releaseType = "release"
 
-                    gameVersions = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+                gameVersions = [activeVersion]
 
-                    changelog {
-                        format = "markdown"
-                        content = getCurrentChangelog()
-                    }
+                changelog {
+                    format = "markdown"
+                    content = getCurrentChangelog()
                 }
             }
         }

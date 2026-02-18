@@ -39,7 +39,7 @@ jobs:
       - name: Publish to CurseForge
         env:
           CURSEFORGE_API_TOKEN: ${{ secrets.CURSEFORGE_API_TOKEN }}
-        run: ./gradlew publishCurseforgePublicationToCurseForge
+        run: ./gradlew publishAllToCurseForge
 
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
