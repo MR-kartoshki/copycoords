@@ -2,6 +2,13 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.2.2] - Not yet released
+
+### Added
+
+### Changed
+- Updated Mod Menu Mod description and authors to match those stated in the README
+
 ## [1.2.1] - 2026-02-17
 
 ### Added
