@@ -288,12 +288,12 @@ tasks.register("writeCurrentChangelog") {
 
 // ===== Modrinth Publishing (Minotaur) =====
 // Each Stonecutter subproject uploads its own JAR for its MC version
-ext.modrinthProjectId = "GzPkXb2a"
+def modrinthProjectId = "GzPkXb2a"
 
 if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
     modrinth {
         token = System.getenv("MODRINTH_TOKEN")
-        projectId = ext.modrinthProjectId
+        projectId = modrinthProjectId
         versionNumber = "${project.mod_version}+${activeVersion}"
         versionName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
         versionType = "release"
