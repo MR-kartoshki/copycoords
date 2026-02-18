@@ -287,18 +287,24 @@ tasks.register("writeCurrentChangelog") {
 }
 
 // ===== Modrinth Publishing (Minotaur) =====
+// Each Stonecutter subproject uploads its own JAR for its MC version
+ext.modrinthProjectId = "GzPkXb2a"
+
 if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
     modrinth {
         token = System.getenv("MODRINTH_TOKEN")
-        projectId = "GzPkXb2a"
-        versionNumber = project.version.toString()
-        versionType = "release"  // or "beta" / "alpha"
+        projectId = ext.modrinthProjectId
+        versionNumber = "${project.mod_version}+${activeVersion}"
+        versionName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
+        versionType = "release"
         uploadFile = tasks.remapJar
-        gameVersions = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
+        gameVersions = [activeVersion]
         loaders = ["fabric"]
         changelog = getCurrentChangelog()
-        syncBodyFrom = rootProject.file("README.md").text  // Sync README to Modrinth description
+        syncBodyFrom = rootProject.file("README.md").text
     }
+
+    tasks.modrinth.dependsOn(tasks.remapJar)
 }
 
 // ===== CurseForge Publishing =====

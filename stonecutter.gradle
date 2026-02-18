@@ -3,3 +3,12 @@ plugins {
 }
 
 stonecutter.active "1.21.11"
+
+// Aggregate task: uploads all version JARs to Modrinth in one command
+tasks.register("publishAllToModrinth") {
+    group = "publishing"
+    description = "Upload all Stonecutter version JARs to Modrinth"
+    subprojects.each { sub ->
+        dependsOn ":${sub.name}:modrinth"
+    }
+}
