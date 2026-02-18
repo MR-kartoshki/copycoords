@@ -36,16 +36,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build all versions
-        run: ./gradlew buildAllVersions
+        run: ./gradlew buildAllVersions --no-daemon
 
       - name: Extract current changelog
-        run: ./gradlew writeCurrentChangelog
+        run: ./gradlew writeCurrentChangelog --no-daemon
 
       - name: Publish to Modrinth
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true')
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: ./gradlew publishAllToModrinth
+        run: ./gradlew publishAllToModrinth --no-daemon
 
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
