@@ -48,6 +48,7 @@ jobs:
         run: ./gradlew publishAllToModrinth --no-daemon
 
       - name: GitHub Release (attach jar)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           body_path: build/current-changelog.md
