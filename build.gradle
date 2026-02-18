@@ -190,7 +190,7 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     displayName = "CopyCoords ${project.version}"
                     releaseType = "release"
 
-                    gameVersions = ["1.21.11"]
+                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")]
 
                     changelog {
                         format = "markdown"
