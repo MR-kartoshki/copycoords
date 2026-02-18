@@ -2,7 +2,7 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.3.0] - Not yet released
+## [1.3.0] - 2026-02-18
 
 ### Added
 - Optional `/copycoords [goal]` to convert current coordinates to a target dimension
@@ -10,6 +10,7 @@ All notable changes to CopyCoords will be documented in this file.
 
 ### Changed
 - Updated Mod Menu Mod description and authors to match those stated in the README
+- `/convertcoords` now uses the same conversion logic as `/copycoords [goal]` (dimension-aware conversion and `~` relative coordinates); output and clipboard behavior now match the mod settings
 
 ## [1.2.1] - 2026-02-17
 

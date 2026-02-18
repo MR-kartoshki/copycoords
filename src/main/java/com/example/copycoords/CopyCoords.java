@@ -155,13 +155,12 @@ public class CopyCoords implements ClientModInitializer {
         String goal = StringArgumentType.getString(context, "goal").toLowerCase();
         
         double x, y, z;
-        
-        // Try to get coordinates from the optional "coordinates" argument
+
+        // Try to get coordinates from the optional "coordinates" argument (supports ~ relative syntax)
         try {
             String coordInput = StringArgumentType.getString(context, "coordinates");
-            // Parse coordinates from input string (e.g., "~ ~ ~" or "100 64 200" or "~10 ~ ~20")
             String[] parts = coordInput.trim().split("\\s+");
-            
+
             x = parseCoordinate(parts.length > 0 ? parts[0] : "~", player.getX());
             y = parseCoordinate(parts.length > 1 ? parts[1] : "~", player.getY());
             z = parseCoordinate(parts.length > 2 ? parts[2] : "~", player.getZ());
@@ -172,28 +171,19 @@ public class CopyCoords implements ClientModInitializer {
             z = Math.floor(player.getZ());
         }
 
-        // Determine conversion direction: if goal is nether, convert from overworld -> nether (divide by 8)
-        double rx = x;
-        double rz = z;
-        if (goal.equals("nether")) {
-            rx = Math.floor(x / 8.0);
-            rz = Math.floor(z / 8.0);
-        } else if (goal.equals("overworld")) {
-            rx = Math.floor(x * 8.0);
-            rz = Math.floor(z * 8.0);
-        } else {
-            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.unknown_goal", goal));
+        // Round/convert to integers in the same way other commands do
+        int ix = (int) Math.floor(x);
+        int iy = (int) Math.round(y);
+        int iz = (int) Math.floor(z);
+
+        long[] converted = convertCurrentCoordsToGoal(player, goal, ix, iy, iz);
+        if (converted == null) {
             return 0;
         }
 
-        long ix = (long) rx;
-        long iy = Math.round(y);
-        long iz = (long) rz;
-
-        String out = ix + " " + iy + " " + iz;
+        String out = converted[0] + " " + converted[1] + " " + converted[2];
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", out));
 
-        // Copy converted coordinates to clipboard if enabled in config
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(out);
         }
