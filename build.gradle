@@ -281,7 +281,7 @@ curseforge {
                 displayName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
                 releaseType = "release"
 
-                gameVersions = [activeVersion]
+                gameVersions = [project.curseforge.gameVersion(activeVersion)]
 
                 changelog {
                     format = "markdown"
