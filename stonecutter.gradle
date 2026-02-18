@@ -8,6 +8,7 @@ stonecutter.active "1.21.11"
 tasks.register("buildAllVersions") {
     group = "build"
     description = "Build all Stonecutter version JARs"
+    
     dependsOn ':1.21:build',
               ':1.21.1:build',
               ':1.21.2:build',
