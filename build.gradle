@@ -179,7 +179,8 @@ if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
 // ===== CurseForge Publishing =====
 if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
     curseforge {
-        apiToken = System.getenv("CURSEFORGE_API_TOKEN")
+        // Use Gradle providers to wire the environment variable into the plugin property
+        apiToken.set(providers.environmentVariable("CURSEFORGE_API_TOKEN"))
 
         publications {
             register("curseforge") {
@@ -189,8 +190,9 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     from(tasks.named("remapJar"))
                     displayName = "CopyCoords ${project.version}"
                     releaseType = "release"
-                    gameVersions = ["1.21.11"]
 
+                    // The curseforge plugin expects a Set<GameVersion>, not plain strings.
+                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")]
 
                     changelog {
                         format = "markdown"
