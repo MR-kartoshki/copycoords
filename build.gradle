@@ -256,10 +256,7 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     releaseType = "release"
 
                     // Add all supported Minecraft versions
-                    gameVersions = [
-                        new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.1"),
-                        new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")
-                    ]
+                    gameVersions = ["1.21.1", "1.21.11"]
 
                     changelog {
                         format = "markdown"
