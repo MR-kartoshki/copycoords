@@ -32,4 +32,5 @@ Thumbs.db
 # Misc
 *.log
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.zip
