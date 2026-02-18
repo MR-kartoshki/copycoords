@@ -6,15 +6,16 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 // Main mod class that initializes the mod and registers the /copycoords command
 public class CopyCoords implements ClientModInitializer {
@@ -29,7 +30,6 @@ public class CopyCoords implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             LiteralArgumentBuilder<FabricClientCommandSource> builder = ClientCommandManager.literal("copycoords");
             builder.executes(context -> executeCopyCoords(context));
-            dispatcher.register(builder);
 
             // Register /convertcoords <goal> <pos>
             LiteralArgumentBuilder<FabricClientCommandSource> conv = ClientCommandManager.literal("convertcoords");
@@ -64,6 +64,29 @@ public class CopyCoords implements ClientModInitializer {
 
             conv.then(goalArg);
             dispatcher.register(conv);
+
+            // Optional goal dimension for /copycoords
+            RequiredArgumentBuilder<FabricClientCommandSource, String> copyGoalArg =
+                ClientCommandManager.argument("goal", StringArgumentType.word())
+                    .suggests(dimSuggestions)
+                    .executes(context -> executeCopyCoordsWithGoal(context));
+            builder.then(copyGoalArg);
+            dispatcher.register(builder);
+
+            // Register /msgcoords <player> [goal]
+            LiteralArgumentBuilder<FabricClientCommandSource> msg = ClientCommandManager.literal("msgcoords");
+            RequiredArgumentBuilder<FabricClientCommandSource, String> playerArg =
+                ClientCommandManager.argument("player", StringArgumentType.word())
+                    .executes(context -> executeMsgCoords(context));
+
+            RequiredArgumentBuilder<FabricClientCommandSource, String> msgGoalArg =
+                ClientCommandManager.argument("goal", StringArgumentType.word())
+                    .suggests(dimSuggestions)
+                    .executes(context -> executeMsgCoordsWithGoal(context));
+
+            playerArg.then(msgGoalArg);
+            msg.then(playerArg);
+            dispatcher.register(msg);
         });
     }
 
@@ -87,23 +110,35 @@ public class CopyCoords implements ClientModInitializer {
 
         // Copy to clipboard if enabled in config
         if (config.copyToClipboard) {
-            try {
-                // Use Windows clip.exe to copy to system clipboard
-                Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + coordString + " | clip.exe"});
-                int exitCode = process.waitFor();
-                if (exitCode == 0) {
-                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
-                } else {
-                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", "clip.exe returned " + exitCode));
-                }
-            } catch (Exception e) {
-                // Handle clipboard copy errors gracefully
-                String errorMsg = e.getMessage();
-                if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = e.getClass().getSimpleName();
-                }
-                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
-            }
+            copyToClipboardWithFeedback(coordString);
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    // Execute /copycoords with a goal dimension to convert current coordinates
+    private int executeCopyCoordsWithGoal(CommandContext<FabricClientCommandSource> context) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.no_player"));
+            return 0;
+        }
+
+        String goal = StringArgumentType.getString(context, "goal").toLowerCase();
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+
+        long[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
+        if (converted == null) {
+            return 0;
+        }
+
+        String coordString = converted[0] + " " + converted[1] + " " + converted[2];
+        Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", coordString));
+
+        if (config.copyConvertedToClipboard) {
+            copyToClipboardWithFeedback(coordString);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -147,7 +182,7 @@ public class CopyCoords implements ClientModInitializer {
             rx = Math.floor(x * 8.0);
             rz = Math.floor(z * 8.0);
         } else {
-            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Unknown goal dimension: " + goal + " (use overworld or nether)"));
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.unknown_goal", goal));
             return 0;
         }
 
@@ -160,26 +195,50 @@ public class CopyCoords implements ClientModInitializer {
 
         // Copy converted coordinates to clipboard if enabled in config
         if (config.copyConvertedToClipboard) {
-            try {
-                // Use Windows clip.exe to copy to system clipboard
-                Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + out + " | clip.exe"});
-                int exitCode = process.waitFor();
-                if (exitCode == 0) {
-                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
-                } else {
-                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", "clip.exe returned " + exitCode));
-                }
-            } catch (Exception e) {
-                // Handle clipboard copy errors gracefully
-                String errorMsg = e.getMessage();
-                if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = e.getClass().getSimpleName();
-                }
-                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
-            }
+            copyToClipboardWithFeedback(out);
         }
 
         return Command.SINGLE_SUCCESS;
+    }
+
+    // Execute /msgcoords <player> using current coordinates
+    private int executeMsgCoords(CommandContext<FabricClientCommandSource> context) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.no_player"));
+            return 0;
+        }
+
+        String target = StringArgumentType.getString(context, "player");
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+        String coordString = x + " " + y + " " + z;
+
+        return sendCoordsMessage(target, coordString);
+    }
+
+    // Execute /msgcoords <player> <goal> using converted coordinates
+    private int executeMsgCoordsWithGoal(CommandContext<FabricClientCommandSource> context) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.no_player"));
+            return 0;
+        }
+
+        String target = StringArgumentType.getString(context, "player");
+        String goal = StringArgumentType.getString(context, "goal").toLowerCase();
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+
+        long[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
+        if (converted == null) {
+            return 0;
+        }
+
+        String coordString = converted[0] + " " + converted[1] + " " + converted[2];
+        return sendCoordsMessage(target, coordString);
     }
 
     // Helper method to parse coordinate strings that support ~ for relative coordinates
@@ -202,6 +261,70 @@ public class CopyCoords implements ClientModInitializer {
             } catch (NumberFormatException e) {
                 return playerCoord;
             }
+        }
+    }
+
+    private long[] convertCurrentCoordsToGoal(Player player, String goal, int x, int y, int z) {
+        if (!goal.equals("overworld") && !goal.equals("nether")) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.unknown_goal", goal));
+            return null;
+        }
+
+        if (!player.level().dimension().equals(Level.OVERWORLD) && !player.level().dimension().equals(Level.NETHER)) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.unsupported_dimension"));
+            return null;
+        }
+
+        double rx = x;
+        double rz = z;
+
+        if (player.level().dimension().equals(Level.OVERWORLD) && goal.equals("nether")) {
+            rx = Math.floor(x / 8.0);
+            rz = Math.floor(z / 8.0);
+        } else if (player.level().dimension().equals(Level.NETHER) && goal.equals("overworld")) {
+            rx = Math.floor(x * 8.0);
+            rz = Math.floor(z * 8.0);
+        }
+
+        return new long[]{(long) rx, y, (long) rz};
+    }
+
+    private int sendCoordsMessage(String target, String coordString) {
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        if (connection == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.msg_failed", target, "no server connection"));
+            return 0;
+        }
+
+        try {
+            connection.sendCommand("msg " + target + " " + coordString);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.msg_sent", target, coordString));
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.msg_failed", target, errorMsg));
+            return 0;
+        }
+    }
+
+    private void copyToClipboardWithFeedback(String text) {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + text + " | clip.exe"});
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
+            } else {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", "clip.exe returned " + exitCode));
+            }
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
         }
     }
 }

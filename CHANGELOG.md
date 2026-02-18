@@ -2,9 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.2.2] - Not yet released
+## [1.3.0] - Not yet released
 
 ### Added
+- Optional `/copycoords [goal]` to convert current coordinates to a target dimension
+- `/msgcoords [player] [goal]` to send coordinates to another player with optional conversion
 
 ### Changed
 - Updated Mod Menu Mod description and authors to match those stated in the README

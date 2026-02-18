@@ -11,5 +11,9 @@
   "message.copycoords.command.copy_failed": "Failed to copy coordinates to clipboard: %s",
   "message.copycoords.keybind.copied": "Copied coordinates to clipboard: %s",
   "message.copycoords.keybind.failed": "Failed to copy coordinates to clipboard: %s",
-  "message.copycoords.command.converted": "Converted coordinates: %s"
+  "message.copycoords.command.converted": "Converted coordinates: %s",
+  "message.copycoords.command.unknown_goal": "Unknown goal dimension: %s (use overworld or nether)",
+  "message.copycoords.command.unsupported_dimension": "Cannot convert coordinates in this dimension (only Overworld and Nether are supported).",
+  "message.copycoords.command.msg_sent": "Sent coordinates to %s: %s",
+  "message.copycoords.command.msg_failed": "Failed to send coordinates to %s: %s"
 }

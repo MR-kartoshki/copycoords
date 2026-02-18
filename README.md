@@ -9,6 +9,7 @@ Whether you're pasting a location into chat, coordinating building projects acro
 - `/copycoords` — prints your current block coordinates in chat and can copy them to your system clipboard.
 - Keybind — press **C** (default) to copy your coordinates instantly.
 - `/convertcoords` — convert coordinates between the Overworld and the Nether, with optional clipboard copying.
+- `/msgcoords` — send your coordinates to another player, with optional dimension conversion.
 - Configurable — toggle automatic clipboard copying for both commands in Mod Menu.
 - Localized — supports translations for chat messages.
 
@@ -26,8 +27,9 @@ Notes: Conversion uses the standard 8:1 X/Z scaling between Overworld and Nether
 
 ## Usage
 
-- `/copycoords` — print and optionally copy current coordinates.
+- `/copycoords [goal]` — print and optionally copy current coordinates. When `goal` is provided, converts your current position to the target dimension.
 - `/convertcoords [goal] [x] [y] [z]` — convert coordinates between dimensions.
+- `/msgcoords [player] [goal]` — send your coordinates to another player, optionally converted to a target dimension.
 - Keybind — press **C** to copy coordinates without typing.
 
 ## Installation
