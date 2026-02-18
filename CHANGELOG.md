@@ -5,7 +5,7 @@ All notable changes to CopyCoords will be documented in this file.
 ## [1.3.1] - 2026-02-18
 
 ### Added
-- Multi-version build support for all Minecraft 1.21.x versions (1.21, 1.21.1-1.21.11)
+- Multi-version build support for all Minecraft 1.21.x versions (1.21-1.21.11)
 
 ## [1.3.0] - 2026-02-18
 
