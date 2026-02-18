@@ -169,7 +169,7 @@ if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
         versionNumber = project.version.toString()
         versionType = "release"  // or "beta" / "alpha"
         uploadFile = tasks.remapJar
-        gameVersions = ["1.21.1"]  // Adjust to your supported versions
+        gameVersions = ["1.21.11"]  // Adjust to your supported versions
         loaders = ["fabric"]
         changelog = getCurrentChangelog()
         syncBodyFrom = file("README.md").text  // Sync README to Modrinth description
@@ -196,7 +196,7 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     releaseType = "release"
 
                     // The curseforge plugin expects a Set<GameVersion>, not plain strings.
-                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.1")]
+                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")]
 
                     changelog {
                         format = "markdown"
