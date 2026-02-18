@@ -31,6 +31,12 @@ ext.gameVersions = [
         cloth_config: '15.0.140',
         modmenu: '11.0.3'
     ],
+    '1.21.4': [
+        fabric_api: '0.107.0+1.21.4',
+        fabric_loader: '0.16.7',
+        cloth_config: '15.0.140',
+        modmenu: '11.0.3'
+    ],
     '1.21.11': [
         fabric_api: '0.141.3+1.21.11',
         fabric_loader: '0.18.4',
@@ -234,7 +240,7 @@ if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
         versionNumber = project.version.toString()
         versionType = "release"  // or "beta" / "alpha"
         uploadFile = tasks.remapJar
-        gameVersions = ["1.21.1", "1.21.11"]  // All supported MC versions
+        gameVersions = ["1.21.1", "1.21.4", "1.21.11"]  // All supported MC versions
         loaders = ["fabric"]
         changelog = getCurrentChangelog()
         syncBodyFrom = rootProject.file("README.md").text  // Sync README to Modrinth description
@@ -256,7 +262,7 @@ if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
                     releaseType = "release"
 
                     // Add all supported Minecraft versions
-                    gameVersions = ["1.21.1", "1.21.11"]
+                    gameVersions = ["1.21.1", "1.21.4", "1.21.11"]
 
                     changelog {
                         format = "markdown"
