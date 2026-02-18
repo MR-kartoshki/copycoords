@@ -4,6 +4,24 @@ plugins {
 
 stonecutter.active "1.21.11"
 
+// Aggregate task: builds all version JARs
+tasks.register("buildAllVersions") {
+    group = "build"
+    description = "Build all Stonecutter version JARs"
+    dependsOn ':1.21:build',
+              ':1.21.1:build',
+              ':1.21.2:build',
+              ':1.21.3:build',
+              ':1.21.4:build',
+              ':1.21.5:build',
+              ':1.21.6:build',
+              ':1.21.7:build',
+              ':1.21.8:build',
+              ':1.21.9:build',
+              ':1.21.10:build',
+              ':1.21.11:build'
+}
+
 // Aggregate task: uploads all version JARs to Modrinth in one command
 tasks.register("publishAllToModrinth") {
     group = "publishing"

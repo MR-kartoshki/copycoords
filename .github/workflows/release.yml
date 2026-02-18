@@ -25,8 +25,8 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Build
-        run: ./gradlew build
+      - name: Build all versions
+        run: ./gradlew buildAllVersions
 
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog
@@ -34,9 +34,7 @@ jobs:
       - name: Publish to Modrinth
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: |
-          ./gradlew modrinth
-          ./gradlew modrinthSyncBody
+        run: ./gradlew publishAllToModrinth
 
       - name: Publish to CurseForge
         env:
@@ -48,4 +46,4 @@ jobs:
         with:
           body_path: build/current-changelog.md
           files: |
-            build/libs/*.jar
+            versions/*/build/libs/*.jar
