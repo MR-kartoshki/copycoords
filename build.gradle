@@ -178,13 +178,8 @@ if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
 
 // ===== CurseForge Publishing =====
 if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
-    ext {
-        curseforgeToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
-    }
-    
     curseforge {
-        // Directly assign the API token from environment
-        apiToken = ext.curseforgeToken
+        apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
 
         publications {
             register("curseforge") {
