@@ -10,6 +10,19 @@ plugins {
     id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0' apply false
 }
 
+// Conditionally apply publishing plugins
+def requestedTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }
+def wantsModrinth = requestedTasks.any { it.contains('modrinth') }
+def wantsCurseforge = requestedTasks.any { it.contains('curseforge') }
+
+if (wantsModrinth || System.getenv('MODRINTH_TOKEN')) {
+    apply plugin: 'com.modrinth.minotaur'
+}
+
+if (wantsCurseforge || System.getenv('CURSEFORGE_API_TOKEN')) {
+    apply plugin: 'io.github.themrmilchmann.curseforge-publish'
+}
+
 // Version mapping for Minecraft versions and their associated dependencies
 ext.gameVersions = [
     '1.21.1': [
@@ -144,6 +157,117 @@ task testAllVersions {
             }
         }
         println "All versions tested successfully!"
+    }
+}
+
+// Version bump utility
+def bumpVersion(String part) {
+    def propsFile = file("gradle.properties")
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+
+    def v = props.getProperty("mod_version") ?: "0.0.0"
+    def pieces = v.tokenize(".")*.toInteger()
+    while (pieces.size() < 3) pieces << 0
+
+    int major = pieces[0], minor = pieces[1], patch = pieces[2]
+
+    switch (part) {
+        case "major":
+            major++; minor = 0; patch = 0; break
+        case "minor":
+            minor++; patch = 0; break
+        case "patch":
+            patch++; break
+        default:
+            throw new IllegalArgumentException("Unknown bump part: " + part)
+    }
+
+    def newV = "${major}.${minor}.${patch}"
+    props.setProperty("mod_version", newV)
+
+    propsFile.withOutputStream { os ->
+        props.store(os, "Updated by Gradle bump task")
+    }
+
+    println("Bumped mod_version: ${v} -> ${newV}")
+}
+
+tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
+tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
+tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
+
+// Extract only the current version's changelog section
+def getCurrentChangelog() {
+    def changelog = rootProject.file("CHANGELOG.md")
+    if (!changelog.exists()) return ""
+    
+    def lines = changelog.readLines()
+    def current = []
+    def started = false
+    
+    for (line in lines) {
+        if (line.startsWith("## [") && started) break
+        if (line.startsWith("## [")) started = true
+        if (started) current.add(line)
+    }
+    
+    return current.join("\n")
+}
+
+// Task to write current changelog to file for GitHub Release
+tasks.register("writeCurrentChangelog") {
+    doLast {
+        def changelogContent = getCurrentChangelog()
+        def outputFile = rootProject.file("build/current-changelog.md")
+        outputFile.parentFile.mkdirs()
+        outputFile.text = changelogContent
+        println("Current changelog written to ${outputFile.path}")
+    }
+}
+
+// ===== Modrinth Publishing (Minotaur) =====
+if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
+    modrinth {
+        token = System.getenv("MODRINTH_TOKEN")
+        projectId = "GzPkXb2a"
+        versionNumber = project.version.toString()
+        versionType = "release"  // or "beta" / "alpha"
+        uploadFile = tasks.remapJar
+        gameVersions = ["1.21.1", "1.21.11"]  // All supported MC versions
+        loaders = ["fabric"]
+        changelog = getCurrentChangelog()
+        syncBodyFrom = rootProject.file("README.md").text  // Sync README to Modrinth description
+    }
+}
+
+// ===== CurseForge Publishing =====
+if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
+    curseforge {
+        apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
+
+        publications {
+            register("curseforge") {
+                projectId = "1463555"
+
+                artifacts.register("main") {
+                    from(tasks.named("remapJar"))
+                    displayName = "CopyCoords ${project.version}"
+                    releaseType = "release"
+
+                    // Add all supported Minecraft versions
+                    gameVersions = [
+                        new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.1"),
+                        new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")
+                    ]
+
+                    changelog {
+                        format = "markdown"
+                        content = getCurrentChangelog()
+                    }
+                }
+            }
+        }
     }
 }
 
