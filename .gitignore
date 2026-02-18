@@ -54,6 +54,7 @@ gradle.properties.local
 .env
 .env.*
 *.keystore
+gf_test_log.txt
 
 # Build artifacts (avoid committing built jars)
 build/libs/
