@@ -178,9 +178,13 @@ if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
 
 // ===== CurseForge Publishing =====
 if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
+    ext {
+        curseforgeToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
+    }
+    
     curseforge {
-        // Use Gradle providers to wire the environment variable into the plugin property
-        apiToken.set(providers.environmentVariable("CURSEFORGE_API_TOKEN"))
+        // Directly assign the API token from environment
+        apiToken = ext.curseforgeToken
 
         publications {
             register("curseforge") {
