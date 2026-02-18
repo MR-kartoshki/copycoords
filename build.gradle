@@ -6,18 +6,13 @@ plugins {
     id 'fabric-loom' version '1.15.0-alpha.6'
     id 'dev.kikugie.stonecutter'
     id 'maven-publish'
-    id 'com.modrinth.minotaur' version '2.8.10' apply false
+    id 'com.modrinth.minotaur' version '2.8.10'
     id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0' apply false
 }
 
-// Conditionally apply publishing plugins
+// Conditionally apply CurseForge plugin
 def requestedTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }
-def wantsModrinth = requestedTasks.any { it.contains('modrinth') }
 def wantsCurseforge = requestedTasks.any { it.contains('curseforge') }
-
-if (wantsModrinth || System.getenv('MODRINTH_TOKEN')) {
-    apply plugin: 'com.modrinth.minotaur'
-}
 
 if (wantsCurseforge || System.getenv('CURSEFORGE_API_TOKEN')) {
     apply plugin: 'io.github.themrmilchmann.curseforge-publish'
@@ -288,24 +283,20 @@ tasks.register("writeCurrentChangelog") {
 
 // ===== Modrinth Publishing (Minotaur) =====
 // Each Stonecutter subproject uploads its own JAR for its MC version
-def modrinthProjectId = "GzPkXb2a"
-
-if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
-    modrinth {
-        token = System.getenv("MODRINTH_TOKEN")
-        projectId = modrinthProjectId
-        versionNumber = "${project.mod_version}+${activeVersion}"
-        versionName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
-        versionType = "release"
-        uploadFile = tasks.remapJar
-        gameVersions = [activeVersion]
-        loaders = ["fabric"]
-        changelog = getCurrentChangelog()
-        syncBodyFrom = rootProject.file("README.md").text
-    }
-
-    tasks.modrinth.dependsOn(tasks.remapJar)
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "GzPkXb2a"
+    versionNumber = "${project.mod_version}+${activeVersion}"
+    versionName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
+    versionType = "release"
+    uploadFile = tasks.remapJar
+    gameVersions = [activeVersion]
+    loaders = ["fabric"]
+    changelog = getCurrentChangelog()
+    syncBodyFrom = rootProject.file("README.md").text
 }
+
+tasks.modrinth.dependsOn(tasks.remapJar)
 
 // ===== CurseForge Publishing =====
 if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
