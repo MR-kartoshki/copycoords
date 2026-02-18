@@ -3,8 +3,8 @@
   "id": "copycoords",
   "version": "${version}",
   "name": "Copy Coords",
-  "description": "A small client‑side mod adding a /copycoords command that prints your coordinates and optionally copies them to your clipboard.",
-  "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)","freddyfazbear0000 (CurseForge)","MR-Kartoshki (Modrinth)"],
+  "description": "CopyCoords is a small Fabric mod for Minecraft 1.21.11 that makes it quick and easy to get, share, and convert coordinates.",
+  "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)"],
   "license": "MIT",
   "icon": "assets/copycoords/icon.png",
   "contact": {
@@ -23,7 +23,5 @@
     "cloth-config": ">=11.0.0",
     "modmenu": ">=9.0.0"
   },
-  "suggests": {
-    "fabric-language-kotlin": ">=1.8.0"
-  }
+  "suggests": {}
 }
