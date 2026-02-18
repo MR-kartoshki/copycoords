@@ -1,39 +1,52 @@
-// Hi :)
+// Stonecutter + Fabric Loom Multi-Version Build Configuration
 
 import java.util.Properties
 
 plugins {
-    id 'net.fabricmc.fabric-loom-remap' version '1.15.0-alpha.6'
+    id 'fabric-loom' version '1.15.0-alpha.6'
+    id 'dev.kikugie.stonecutter'
     id 'maven-publish'
     id 'com.modrinth.minotaur' version '2.8.10' apply false
     id 'io.github.themrmilchmann.curseforge-publish' version '0.8.0' apply false
 }
 
+// Version mapping for Minecraft versions and their associated dependencies
+ext.gameVersions = [
+    '1.21.1': [
+        fabric_api: '0.116.8+1.21.1',
+        fabric_loader: '0.18.4',
+        cloth_config: '15.0.140',
+        modmenu: '11.0.3'
+    ],
+    '1.21.11': [
+        fabric_api: '0.141.3+1.21.11',
+        fabric_loader: '0.18.4',
+        cloth_config: '11.0.99',
+        modmenu: '17.0.0-beta.2'
+    ]
+]
+
+// Default/active version for local development
+String defaultVersion = '1.21.11'
+def scExt = project.extensions.findByName('stonecutter')
+def scVersion = scExt?.current?.version
+String activeVersion = project.findProperty('MC_VERSION')
+    ?: (scVersion ?: (ext.gameVersions.containsKey(project.name) ? project.name : defaultVersion))
+println "Building for Minecraft version: ${activeVersion}"
+
+// Meta properties
 group = project.maven_group
 version = project.mod_version
 
-def requestedTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }
-def wantsModrinth = requestedTasks.any { it.contains('modrinth') }
-def wantsCurseforge = requestedTasks.any { it.contains('curseforge') }
-
-if (wantsModrinth || System.getenv('MODRINTH_TOKEN')) {
-    apply plugin: 'com.modrinth.minotaur'
+// Get the active version's dependency specs
+def versionDeps = ext.gameVersions[activeVersion]
+if (!versionDeps) {
+    throw new GradleException("Unknown Minecraft version: ${activeVersion}. Supported versions: ${ext.gameVersions.keySet()}")
 }
 
-if (wantsCurseforge || System.getenv('CURSEFORGE_API_TOKEN')) {
-    apply plugin: 'io.github.themrmilchmann.curseforge-publish'
-}
-
+// Configure base name to include active version
 base {
-    archivesName = project.archives_base_name + "+1.21.11"
-}
-
-tasks.named('jar', Jar) {
-    archiveFileName = project.archives_base_name + "-" + project.mod_version + "+1.21.11.jar"
-}
-
-tasks.named('remapJar') {
-    archiveFileName = project.archives_base_name + "-" + project.mod_version + "+1.21.11.jar"
+    archivesName = project.archives_base_name + "+${activeVersion}"
 }
 
 repositories {
@@ -59,12 +72,15 @@ repositories {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:1.21.11"
+    // Use the active version's Minecraft
+    minecraft "com.mojang:minecraft:${activeVersion}"
     mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:0.18.1"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.141.3+1.21.11"
-    modImplementation "me.shedaniel.cloth:cloth-config-fabric:11.0.99"
-    modApi "com.terraformersmc:modmenu:17.0.0-beta.2"
+
+    // Load version-specific dependencies
+    modImplementation "net.fabricmc:fabric-loader:${versionDeps.fabric_loader}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${versionDeps.fabric_api}"
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${versionDeps.cloth_config}"
+    modApi "com.terraformersmc:modmenu:${versionDeps.modmenu}"
 }
 
 loom {
@@ -75,6 +91,10 @@ loom {
             source = sourceSets.main
         }
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:deprecation"
 }
 
 publishing {
@@ -89,115 +109,43 @@ publishing {
 }
 
 processResources {
-    inputs.property "version", project.version
+    def versionValue = project.version
+    def mcversionValue = activeVersion
+    inputs.property "version", versionValue
+    inputs.property "mcversion", mcversionValue
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand "version": versionValue,
+                "mcversion": mcversionValue
     }
 }
 
-
-def bumpVersion(String part) {
-    def propsFile = file("gradle.properties")
-    def props = new Properties()
-    propsFile.withInputStream { props.load(it) }
-
-    def v = props.getProperty("mod_version") ?: "0.0.0"
-    def pieces = v.tokenize(".")*.toInteger()
-    while (pieces.size() < 3) pieces << 0
-
-    int major = pieces[0], minor = pieces[1], patch = pieces[2]
-
-    switch (part) {
-        case "major":
-            major++; minor = 0; patch = 0; break
-        case "minor":
-            minor++; patch = 0; break
-        case "patch":
-            patch++; break
-        default:
-            throw new IllegalArgumentException("Unknown bump part: " + part)
-    }
-
-    def newV = "${major}.${minor}.${patch}"
-    props.setProperty("mod_version", newV)
-
-    propsFile.withOutputStream { os ->
-        props.store(os, "Updated by Gradle bump task")
-    }
-
-    println("Bumped mod_version: ${v} -> ${newV}")
-}
-
-tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
-tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
-tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
-
-// Extract only the current version's changelog section
-def getCurrentChangelog() {
-    def changelog = file("CHANGELOG.md")
-    if (!changelog.exists()) return ""
-    
-    def lines = changelog.readLines()
-    def current = []
-    def started = false
-    
-    for (line in lines) {
-        if (line.startsWith("## [") && started) break
-        if (line.startsWith("## [")) started = true
-        if (started) current.add(line)
-    }
-    
-    return current.join("\n")
-}
-
-// Task to write current changelog to file for GitHub Release
-tasks.register("writeCurrentChangelog") {
+// Task to build for all versions
+task buildAllVersions {
     doLast {
-        def changelogContent = getCurrentChangelog()
-        def outputFile = file("build/current-changelog.md")
-        outputFile.parentFile.mkdirs()
-        outputFile.text = changelogContent
-        println("Current changelog written to ${outputFile.path}")
-    }
-}
-
-// ===== Modrinth Publishing (Minotaur) =====
-if (pluginManager.hasPlugin('com.modrinth.minotaur')) {
-    modrinth {
-        token = System.getenv("MODRINTH_TOKEN")
-        projectId = "GzPkXb2a"
-        versionNumber = project.version.toString()
-        versionType = "release"  // or "beta" / "alpha"
-        uploadFile = tasks.remapJar
-        gameVersions = ["1.21.11"]  // Adjust to your supported versions
-        loaders = ["fabric"]
-        changelog = getCurrentChangelog()
-        syncBodyFrom = file("README.md").text  // Sync README to Modrinth description
-    }
-}
-
-// ===== CurseForge Publishing =====
-if (pluginManager.hasPlugin('io.github.themrmilchmann.curseforge-publish')) {
-    curseforge {
-        apiToken = System.getenv("CURSEFORGE_API_TOKEN") ?: ""
-
-        publications {
-            register("curseforge") {
-                projectId = "1463555"
-
-                artifacts.register("main") {
-                    from(tasks.named("remapJar"))
-                    displayName = "CopyCoords ${project.version}"
-                    releaseType = "release"
-
-                    gameVersions = [new io.github.themrmilchmann.gradle.publish.curseforge.GameVersion("Minecraft", "1.21.11")]
-
-                    changelog {
-                        format = "markdown"
-                        content = getCurrentChangelog()
-                    }
-                }
+        println "Building CopyCoords for all supported Minecraft versions..."
+        ext.gameVersions.keySet().each { version ->
+            println "Building for ${version}..."
+            exec {
+                commandLine "./gradlew.bat", "build", "-PMC_VERSION=${version}"
             }
         }
+        println "All versions built successfully!"
     }
 }
+
+// Task to test all versions
+task testAllVersions {
+    doLast {
+        println "Testing CopyCoords for all supported Minecraft versions..."
+        ext.gameVersions.keySet().each { version ->
+            println "Testing for ${version}..."
+            exec {
+                commandLine "./gradlew.bat", "test", "-PMC_VERSION=${version}"
+            }
+        }
+        println "All versions tested successfully!"
+    }
+}
+
+// Default build behavior
+build.dependsOn remapJar
