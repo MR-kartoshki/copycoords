@@ -47,10 +47,8 @@ public class CopyCoordsBind {
         String coordString = x + " " + y + " " + z;
 
         try {
-            // Copy coordinates to clipboard using Windows clip.exe
-            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "echo " + coordString + " | clip.exe");
-            Process process = pb.start();
-            process.waitFor();
+            // Copy coordinates to clipboard using cross-platform utility
+            ClipboardUtils.copyToClipboard(coordString);
             // Notify player of successful copy
             minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied", coordString));
         } catch (Exception e) {

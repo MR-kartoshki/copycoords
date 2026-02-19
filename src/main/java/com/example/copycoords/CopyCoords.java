@@ -302,13 +302,9 @@ public class CopyCoords implements ClientModInitializer {
 
     private void copyToClipboardWithFeedback(String text) {
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "echo " + text + " | clip.exe"});
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
-            } else {
-                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", "clip.exe returned " + exitCode));
-            }
+            // Copy to clipboard using cross-platform utility
+            ClipboardUtils.copyToClipboard(text);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
         } catch (Exception e) {
             String errorMsg = e.getMessage();
             if (errorMsg == null || errorMsg.isEmpty()) {

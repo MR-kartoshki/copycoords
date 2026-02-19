@@ -1,5 +1,5 @@
 ## High Priority
-- [ ] Cross-platform clipboard support - Currently only works on Windows (clip.exe). Linux/Mac users can't use clipboard features.
+- [x] Cross-platform clipboard support - Currently only works on Windows (clip.exe). Linux/Mac users can't use clipboard features.
 
 - [ ] Additional language translations - Only English exists. Adding more languages would help international players.
 
