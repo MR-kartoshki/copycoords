@@ -58,6 +58,11 @@ jobs:
           MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
           CHANGELOG="$(cat build/current-changelog.md)"
 
+          if [[ -z "${MODRINTH_TOKEN:-}" ]]; then
+            echo "::error::MODRINTH_TOKEN is not set"
+            exit 1
+          fi
+
           # Read optional dependency config from repo root (deps.json)
           # Expected format:
           # [
@@ -109,11 +114,27 @@ jobs:
                 dependencies: $deps
               }')"
 
-            echo "Uploading ${JAR} for MC ${MC_VERSION}"
-            curl -fsS -X POST "https://api.modrinth.com/v2/version" \
+            CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
               -H "Authorization: ${MODRINTH_TOKEN}" \
-              -F "data=${PAYLOAD}" \
-              -F "file=@${JAR}"
+              "https://api.modrinth.com/v2/project/${PROJECT_ID}/version/${VERSION_NUMBER}")"
+            if [[ "$CHECK_STATUS" == "200" ]]; then
+              echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload for ${JAR}."
+              continue
+            elif [[ "$CHECK_STATUS" != "404" ]]; then
+              echo "::warning::Unexpected response while checking existing version (${CHECK_STATUS})."
+              cat /tmp/modrinth-check.json || true
+            fi
+
+            echo "Uploading ${JAR} for MC ${MC_VERSION} as ${VERSION_NUMBER}"
+            UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
+              -H "Authorization: ${MODRINTH_TOKEN}" \
+              -F "data=${PAYLOAD};type=application/json" \
+              -F "file=@${JAR}")"
+            if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
+              echo "::error::Modrinth upload failed with HTTP ${UPLOAD_STATUS} for ${JAR}."
+              cat /tmp/modrinth-upload.json || true
+              exit 1
+            fi
           done
 
       - name: GitHub Release (attach jar)
