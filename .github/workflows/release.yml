@@ -89,59 +89,86 @@ jobs:
             exit 1
           fi
 
+          PRIMARY_JARS=()
           for JAR in "${JARS[@]}"; do
-            # Skip non-primary artifacts
             if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
               continue
             fi
-
-            MC_VERSION="$(echo "$JAR" | sed -E 's#^versions/([^/]+)/.*#\1#')"
-            VERSION_NUMBER="${MOD_VERSION}+${MC_VERSION}"
-            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
-
-            # Keep existing payload fields and inject validated dependencies.
-            PAYLOAD="$(jq -cn \
-              --arg project_id "$PROJECT_ID" \
-              --arg name "$VERSION_NAME" \
-              --arg version_number "$VERSION_NUMBER" \
-              --arg changelog "$CHANGELOG" \
-              --arg mc "$MC_VERSION" \
-              --argjson deps "$DEPS_JSON" \
-              '{
-                project_id: $project_id,
-                name: $name,
-                version_number: $version_number,
-                changelog: $changelog,
-                game_versions: [$mc],
-                loaders: ["fabric"],
-                featured: false,
-                version_type: "release",
-                file_parts: ["file"],
-                dependencies: $deps
-              }')"
-
-            CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
-              -H "Authorization: ${MODRINTH_TOKEN}" \
-              "https://api.modrinth.com/v2/project/${PROJECT_ID}/version/${VERSION_NUMBER}")"
-            if [[ "$CHECK_STATUS" == "200" ]]; then
-              echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload for ${JAR}."
-              continue
-            elif [[ "$CHECK_STATUS" != "404" ]]; then
-              echo "::warning::Unexpected response while checking existing version (${CHECK_STATUS})."
-              cat /tmp/modrinth-check.json || true
-            fi
-
-            echo "Uploading ${JAR} for MC ${MC_VERSION} as ${VERSION_NUMBER}"
-            UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
-              -H "Authorization: ${MODRINTH_TOKEN}" \
-              -F "data=${PAYLOAD};type=application/json" \
-              -F "file=@${JAR}")"
-            if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
-              echo "::error::Modrinth upload failed with HTTP ${UPLOAD_STATUS} for ${JAR}."
-              cat /tmp/modrinth-upload.json || true
-              exit 1
-            fi
+            PRIMARY_JARS+=("$JAR")
           done
+
+          if [[ ${#PRIMARY_JARS[@]} -eq 0 ]]; then
+            echo "No primary JAR files found under versions/*/build/libs"
+            exit 1
+          fi
+
+          VERSION_NUMBER="${MOD_VERSION}"
+
+          mapfile -t UNIQUE_MC_VERSIONS < <(
+            for JAR in "${PRIMARY_JARS[@]}"; do
+              echo "$JAR" | sed -E 's#^versions/([^/]+)/.*#\1#'
+            done | sort -uV
+          )
+
+          if [[ ${#UNIQUE_MC_VERSIONS[@]} -eq 1 ]]; then
+            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${UNIQUE_MC_VERSIONS[0]}"
+          else
+            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${UNIQUE_MC_VERSIONS[0]}-${UNIQUE_MC_VERSIONS[-1]}"
+          fi
+
+          GAME_VERSIONS_JSON="$(printf '%s\n' "${UNIQUE_MC_VERSIONS[@]}" | jq -R . | jq -s .)"
+
+          FILE_PARTS=()
+          CURL_FILES=()
+          for i in "${!PRIMARY_JARS[@]}"; do
+            PART="file${i}"
+            FILE_PARTS+=("$PART")
+            CURL_FILES+=( -F "${PART}=@${PRIMARY_JARS[$i]}" )
+          done
+          FILE_PARTS_JSON="$(printf '%s\n' "${FILE_PARTS[@]}" | jq -R . | jq -s .)"
+
+          PAYLOAD="$(jq -cn \
+            --arg project_id "$PROJECT_ID" \
+            --arg name "$VERSION_NAME" \
+            --arg version_number "$VERSION_NUMBER" \
+            --arg changelog "$CHANGELOG" \
+            --argjson game_versions "$GAME_VERSIONS_JSON" \
+            --argjson file_parts "$FILE_PARTS_JSON" \
+            --argjson deps "$DEPS_JSON" \
+            '{
+              project_id: $project_id,
+              name: $name,
+              version_number: $version_number,
+              changelog: $changelog,
+              game_versions: $game_versions,
+              loaders: ["fabric"],
+              featured: false,
+              version_type: "release",
+              file_parts: $file_parts,
+              dependencies: $deps
+            }')"
+
+          CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
+            -H "Authorization: ${MODRINTH_TOKEN}" \
+            "https://api.modrinth.com/v2/project/${PROJECT_ID}/version/${VERSION_NUMBER}")"
+          if [[ "$CHECK_STATUS" == "200" ]]; then
+            echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload."
+            exit 0
+          elif [[ "$CHECK_STATUS" != "404" ]]; then
+            echo "::warning::Unexpected response while checking existing version (${CHECK_STATUS})."
+            cat /tmp/modrinth-check.json || true
+          fi
+
+          echo "Uploading ${#PRIMARY_JARS[@]} jar(s) for game versions: ${UNIQUE_MC_VERSIONS[*]} as ${VERSION_NUMBER}"
+          UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
+            -H "Authorization: ${MODRINTH_TOKEN}" \
+            -F "data=${PAYLOAD};type=application/json" \
+            "${CURL_FILES[@]}")"
+          if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
+            echo "::error::Modrinth upload failed with HTTP ${UPLOAD_STATUS}."
+            cat /tmp/modrinth-upload.json || true
+            exit 1
+          fi
 
       - name: GitHub Release (attach jar)
         if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
