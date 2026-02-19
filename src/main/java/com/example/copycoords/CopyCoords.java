@@ -67,6 +67,9 @@ public class CopyCoords implements ClientModInitializer {
             SuggestionProvider<FabricClientCommandSource> bookmarkSuggestions = (ctx, sb) -> {
                 for (String name : dataStore.getBookmarkNames()) {
                     sb.suggest(name);
+                    if (name.contains(" ") || name.contains("\"")) {
+                        sb.suggest(quoteForBrigadier(name));
+                    }
                 }
                 return sb.buildFuture();
             };
@@ -153,16 +156,27 @@ public class CopyCoords implements ClientModInitializer {
                 
                 distcalc.then(x1Arg);
                 
-                // Also allow /distcalc <bookmark1> <bookmark2> format
+                // Also allow /distcalc bookmarks <bookmark1> <bookmark2> format
                 RequiredArgumentBuilder<FabricClientCommandSource, String> bm1Arg =
-                    ClientCommandManager.argument("bookmark1", StringArgumentType.greedyString())
+                    ClientCommandManager.argument("bookmark1", StringArgumentType.string())
                         .suggests(bookmarkSuggestions)
-                        .then(ClientCommandManager.argument("bookmark2", StringArgumentType.greedyString())
+                        .then(ClientCommandManager.argument("bookmark2", StringArgumentType.string())
                             .suggests(bookmarkSuggestions)
                             .executes(context -> executeDistanceCalcBookmarks(context)));
-                
+
                 distcalc.then(ClientCommandManager.literal("bookmarks")
                     .then(bm1Arg));
+
+                // Alias for common typo
+                RequiredArgumentBuilder<FabricClientCommandSource, String> typoBm1Arg =
+                    ClientCommandManager.argument("bookmark1", StringArgumentType.string())
+                        .suggests(bookmarkSuggestions)
+                        .then(ClientCommandManager.argument("bookmark2", StringArgumentType.string())
+                            .suggests(bookmarkSuggestions)
+                            .executes(context -> executeDistanceCalcBookmarks(context)));
+
+                distcalc.then(ClientCommandManager.literal("booksmarks")
+                    .then(typoBm1Arg));
                 
                 dispatcher.register(distcalc);
         });
@@ -578,6 +592,11 @@ public class CopyCoords implements ClientModInitializer {
             return "\"" + escaped + "\"";
         }
         return escaped;
+    }
+
+    private static String quoteForBrigadier(String value) {
+        String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
     }
 
     private static net.minecraft.network.chat.Style applyEvents(net.minecraft.network.chat.Style style,
