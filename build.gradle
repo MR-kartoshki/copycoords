@@ -136,6 +136,17 @@ repositories {
     }
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs = [rootProject.file('src/main/java')]
+        }
+        resources {
+            srcDirs = [rootProject.file('src/main/resources')]
+        }
+    }
+}
+
 dependencies {
     // Use the active version's Minecraft
     minecraft "com.mojang:minecraft:${activeVersion}"
