@@ -2,6 +2,14 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.4.1] - 2026-02-20
+
+### Added
+- **Additional Keybinds** — two new keybinds for faster coordinate workflows
+  - **V key** (default) - Copy coordinates converted to opposite dimension (Overworld ↔ Nether)
+  - **B key** (default) - Copy coordinates with dimension name always shown
+  - All keybinds are fully customizable in Controls settings
+
 ## [1.4.0] - 2026-02-19
 
 ### Added

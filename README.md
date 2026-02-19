@@ -7,7 +7,10 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 ## Features
 
 - `/copycoords` - Get your current coordinates in chat. Optionally copies to clipboard.
-- **C key** (default) - Quick copy keybind without opening chat.
+- **Keybinds** for lightning-fast coordinate copying:
+  - **C key** (default) - Quick copy without opening chat
+  - **V key** (default) - Copy converted coordinates (Overworld ↔ Nether)
+  - **B key** (default) - Copy with dimension name always included
 - `/convertcoords` - Convert coordinates between Overworld and Nether (8:1 scale).
 - `/msgcoords` - Send your coords to another player, with optional dimension conversion.
 - `/distcalc` - Calculate distance and direction between two coordinate sets, with bearing and cardinal directions.
@@ -44,7 +47,19 @@ The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
 - `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` - Calculate distance between two coordinate sets
 - `/distcalc bookmarks [bookmark1] [bookmark2]` - Calculate distance between saved bookmarks
   - If bookmark names contain spaces, wrap them in quotes (e.g., `/distcalc bookmarks "Base One" "Base Two"`)
-- **C key** - Quick copy without opening chat
+
+## Keybinds
+
+All keybinds can be customized in **Options → Controls → Key Binds → CopyCoords**
+
+- **C key** (default) - Copy your current coordinates
+- **V key** (default) - Copy converted coordinates to the opposite dimension
+  - In Overworld: copies Nether coordinates
+  - In Nether: copies Overworld coordinates
+  - Shows an error in the End or other dimensions
+- **B key** (default) - Copy coordinates with dimension name always included
+  - Overrides the `showDimensionInCoordinates` config for this copy
+  - Useful when you want to be explicit about which dimension you're in
 
 ## Installation
 

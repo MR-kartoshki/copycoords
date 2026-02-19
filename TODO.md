@@ -12,7 +12,7 @@
 
 - [x] Distance calculator - Can't calculate distance between two coordinate sets or get direction/bearing.
 
-- [ ] Additional keybinds - Only one keybind for basic copy. Could add keybinds for "copy converted to nether/overworld" or "copy with dimension name".
+- [x] Additional keybinds - Only one keybind for basic copy. Could add keybinds for "copy converted to nether/overworld" or "copy with dimension name".
 
 ## Nice to Have
 - [ ] Clickable chat coordinates - Make coordinate output clickable to re-copy or show on waypoint

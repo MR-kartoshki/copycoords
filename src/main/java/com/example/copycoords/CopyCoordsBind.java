@@ -15,6 +15,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 public class CopyCoordsBind {
     // The key mapping for the copy coordinates keybind
     private static KeyMapping copyKeyBinding;
+    // The key mapping for copying converted coordinates (nether/overworld)
+    private static KeyMapping copyConvertedKeyBinding;
+    // The key mapping for copying with dimension name
+    private static KeyMapping copyWithDimensionKeyBinding;
 
     // Register the keybind and set up the tick event listener
     @SuppressWarnings("null")
@@ -25,11 +29,25 @@ public class CopyCoordsBind {
         copyKeyBinding = KeyBindingHelper.registerKeyBinding(
             createKeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C, copyCategory)
         );
+        // Register the keybind for converted coordinates with default key 'V'
+        copyConvertedKeyBinding = KeyBindingHelper.registerKeyBinding(
+            createKeyMapping("key.copycoords.copy_converted", GLFW.GLFW_KEY_V, copyCategory)
+        );
+        // Register the keybind for copying with dimension name with default key 'B'
+        copyWithDimensionKeyBinding = KeyBindingHelper.registerKeyBinding(
+            createKeyMapping("key.copycoords.copy_with_dimension", GLFW.GLFW_KEY_B, copyCategory)
+        );
 
         // Listen for key presses each client tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (copyKeyBinding.consumeClick()) {
                 executeKeybindCopy(client);
+            }
+            while (copyConvertedKeyBinding.consumeClick()) {
+                executeKeybindCopyConverted(client);
+            }
+            while (copyWithDimensionKeyBinding.consumeClick()) {
+                executeKeybindCopyWithDimension(client);
             }
         });
     }
@@ -61,6 +79,100 @@ public class CopyCoordsBind {
             // Handle clipboard copy errors
             String errorMsg = e.getMessage();
             // Use exception class name if no message is available
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.failed", errorMsg));
+        }
+    }
+
+    // Execute coordinate copying with dimension conversion when keybind is pressed
+    @SuppressWarnings("null")
+    private static void executeKeybindCopyConverted(Minecraft minecraft) {
+        // Ensure player exists before accessing position
+        net.minecraft.world.entity.player.Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+
+        // Get player's current block coordinates
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+        
+        // Determine goal dimension based on current dimension
+        String goal;
+        if (player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
+            goal = "nether";
+        } else if (player.level().dimension().equals(net.minecraft.world.level.Level.NETHER)) {
+            goal = "overworld";
+        } else {
+            // Cannot convert coordinates in End or other dimensions
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.command.unsupported_dimension"));
+            return;
+        }
+
+        // Convert coordinates
+        double rx = x;
+        double rz = z;
+        if (goal.equals("nether")) {
+            rx = Math.floor(x / 8.0);
+            rz = Math.floor(z / 8.0);
+        } else if (goal.equals("overworld")) {
+            rx = Math.floor(x * 8.0);
+            rz = Math.floor(z * 8.0);
+        }
+
+        int convertedX = (int) rx;
+        int convertedZ = (int) rz;
+        String convertedDimensionId = CopyCoords.getDimensionIdForGoal(goal);
+        String coordString = CopyCoords.formatCoordinates(convertedX, y, convertedZ, convertedDimensionId);
+
+        try {
+            // Copy converted coordinates to clipboard
+            ClipboardUtils.copyToClipboard(coordString);
+            // Notify player of successful copy with converted coordinates
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied_converted", coordString));
+            CopyCoords.addHistoryEntry(convertedX, y, convertedZ, convertedDimensionId);
+        } catch (Exception e) {
+            // Handle clipboard copy errors
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.failed", errorMsg));
+        }
+    }
+
+    // Execute coordinate copying with dimension name when keybind is pressed
+    @SuppressWarnings("null")
+    private static void executeKeybindCopyWithDimension(Minecraft minecraft) {
+        // Ensure player exists before accessing position
+        net.minecraft.world.entity.player.Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+
+        // Get player's current block coordinates
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+        
+        String dimensionId = CopyCoords.getDimensionId(player);
+        
+        // Format coordinates with dimension name (regardless of config)
+        CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
+        String coordString = format.format(x, y, z) + " (" + CopyCoords.getDimensionNameFromId(dimensionId) + ")";
+
+        try {
+            // Copy coordinates with dimension to clipboard
+            ClipboardUtils.copyToClipboard(coordString);
+            // Notify player of successful copy
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied_with_dimension", coordString));
+            CopyCoords.addHistoryEntry(x, y, z, dimensionId);
+        } catch (Exception e) {
+            // Handle clipboard copy errors
+            String errorMsg = e.getMessage();
             if (errorMsg == null || errorMsg.isEmpty()) {
                 errorMsg = e.getClass().getSimpleName();
             }
