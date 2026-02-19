@@ -116,6 +116,7 @@ jobs:
                 loaders: ["fabric"],
                 featured: false,
                 version_type: "release",
+                file_parts: ["file"],
                 dependencies: $deps
               }')"
 
