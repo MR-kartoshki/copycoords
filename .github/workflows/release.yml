@@ -26,6 +26,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate deps.json schema
+        if: hashFiles('deps.json') != ''
+        shell: bash
+        run: bash .github/scripts/validate-deps.sh
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -61,18 +66,8 @@ jobs:
           # ]
           DEPS_JSON='[]'
           if [[ -f deps.json ]]; then
-            DEPS_JSON="$(jq -c '
-              if type != "array" then
-                error("deps.json must be a JSON array")
-              else
-                map(
-                  if (has("project_id") and has("dependency_type")) then .
-                  else error("Each dependency must include project_id and dependency_type") end
-                  | if (["required","optional","incompatible","embedded"] | index(.dependency_type)) != null then .
-                    else error("dependency_type must be one of: required, optional, incompatible, embedded") end
-                )
-              end
-            ' deps.json)"
+            bash .github/scripts/validate-deps.sh deps.json
+            DEPS_JSON="$(jq -c '.' deps.json)"
           else
             echo "::warning::deps.json not found in repo root; uploading with empty dependencies array."
           fi
