@@ -145,7 +145,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${versionDeps.fabric_loader}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${versionDeps.fabric_api}"
     modImplementation "me.shedaniel.cloth:cloth-config-fabric:${versionDeps.cloth_config}"
-    modApi "com.terraformersmc:modmenu:${versionDeps.modmenu}"
+    modApi "maven.modrinth:modmenu:${versionDeps.modmenu}"
 }
 
 loom {
