@@ -24,8 +24,37 @@ permissions:
   contents: write
 
 jobs:
-  build-and-publish:
+  discover-versions:
     runs-on: ubuntu-latest
+    outputs:
+      mc_versions: ${{ steps.discover.outputs.mc_versions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Discover Minecraft versions
+        id: discover
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t MC_VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
+
+          if [[ ${#MC_VERSIONS[@]} -eq 0 ]]; then
+            echo "::error::No version folders found under versions/."
+            exit 1
+          fi
+
+          printf 'Discovered versions: %s\n' "${MC_VERSIONS[*]}"
+          echo "mc_versions=$(printf '%s\n' "${MC_VERSIONS[@]}" | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  build-and-publish:
+    needs: discover-versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mc_version: ${{ fromJson(needs.discover-versions.outputs.mc_versions) }}
 
     steps:
       - name: Checkout
@@ -45,8 +74,8 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Build all versions
-        run: ./gradlew buildAllVersions --no-daemon
+      - name: Build matrix version
+        run: ./gradlew ":${{ matrix.mc_version }}:build" --no-daemon
 
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
@@ -60,6 +89,7 @@ jobs:
           set -euo pipefail
 
           PROJECT_ID="GzPkXb2a"
+          MC_VERSION="${{ matrix.mc_version }}"
           MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
           CHANGELOG="$(cat build/current-changelog.md)"
 
@@ -83,49 +113,34 @@ jobs:
           fi
 
           shopt -s nullglob
-          JARS=(versions/*/build/libs/*.jar)
+          JARS=("versions/${MC_VERSION}/build/libs"/*.jar)
           if [[ ${#JARS[@]} -eq 0 ]]; then
-            echo "No JAR files found under versions/*/build/libs"
+            echo "No JAR files found under versions/${MC_VERSION}/build/libs"
             exit 1
           fi
 
-          PRIMARY_JARS=()
+          PRIMARY_JAR=""
           for JAR in "${JARS[@]}"; do
             if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
               continue
             fi
-            PRIMARY_JARS+=("$JAR")
+            if [[ -n "$PRIMARY_JAR" ]]; then
+              echo "::error::Multiple primary JARs found for MC ${MC_VERSION}."
+              printf '%s\n' "$PRIMARY_JAR" "$JAR"
+              exit 1
+            fi
+            PRIMARY_JAR="$JAR"
           done
 
-          if [[ ${#PRIMARY_JARS[@]} -eq 0 ]]; then
-            echo "No primary JAR files found under versions/*/build/libs"
+          if [[ -z "$PRIMARY_JAR" ]]; then
+            echo "No primary JAR file found under versions/${MC_VERSION}/build/libs"
             exit 1
           fi
 
-          VERSION_NUMBER="${MOD_VERSION}"
-
-          mapfile -t UNIQUE_MC_VERSIONS < <(
-            for JAR in "${PRIMARY_JARS[@]}"; do
-              echo "$JAR" | sed -E 's#^versions/([^/]+)/.*#\1#'
-            done | sort -uV
-          )
-
-          if [[ ${#UNIQUE_MC_VERSIONS[@]} -eq 1 ]]; then
-            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${UNIQUE_MC_VERSIONS[0]}"
-          else
-            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${UNIQUE_MC_VERSIONS[0]}-${UNIQUE_MC_VERSIONS[-1]}"
-          fi
-
-          GAME_VERSIONS_JSON="$(printf '%s\n' "${UNIQUE_MC_VERSIONS[@]}" | jq -R . | jq -s .)"
-
-          FILE_PARTS=()
-          CURL_FILES=()
-          for i in "${!PRIMARY_JARS[@]}"; do
-            PART="file${i}"
-            FILE_PARTS+=("$PART")
-            CURL_FILES+=( -F "${PART}=@${PRIMARY_JARS[$i]}" )
-          done
-          FILE_PARTS_JSON="$(printf '%s\n' "${FILE_PARTS[@]}" | jq -R . | jq -s .)"
+          VERSION_NUMBER="${MOD_VERSION}-${MC_VERSION}"
+          VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
+          GAME_VERSIONS_JSON="$(jq -cn --arg mc "$MC_VERSION" '[$mc]')"
+          FILE_PARTS_JSON='["file"]'
 
           PAYLOAD="$(jq -cn \
             --arg project_id "$PROJECT_ID" \
@@ -159,19 +174,43 @@ jobs:
             cat /tmp/modrinth-check.json || true
           fi
 
-          echo "Uploading ${#PRIMARY_JARS[@]} jar(s) for game versions: ${UNIQUE_MC_VERSIONS[*]} as ${VERSION_NUMBER}"
+          echo "Uploading ${PRIMARY_JAR} for game version ${MC_VERSION} as ${VERSION_NUMBER}"
           UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
             -H "Authorization: ${MODRINTH_TOKEN}" \
             -F "data=${PAYLOAD};type=application/json" \
-            "${CURL_FILES[@]}")"
+            -F "file=@${PRIMARY_JAR}")"
           if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
             echo "::error::Modrinth upload failed with HTTP ${UPLOAD_STATUS}."
             cat /tmp/modrinth-upload.json || true
             exit 1
           fi
 
+  github-release:
+    needs:
+      - discover-versions
+      - build-and-publish
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Build all versions
+        run: ./gradlew buildAllVersions --no-daemon
+
+      - name: Extract current changelog
+        run: ./gradlew writeCurrentChangelog --no-daemon
+
       - name: GitHub Release (attach jar)
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
