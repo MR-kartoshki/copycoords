@@ -22,7 +22,7 @@ jq -e '
       end
       | if ((.project_id | type) == "string" and (.project_id | length) > 0) then .
         else error("project_id must be a non-empty string") end
-      | if ((.dependency_type | type) == "string" and (["required","optional","incompatible","embedded"] | index(.dependency_type)) != null) then .
+      | if ((.dependency_type | type) == "string" and (.dependency_type as $dep_type | ["required","optional","incompatible","embedded"] | index($dep_type)) != null) then .
         else error("dependency_type must be one of: required, optional, incompatible, embedded") end
     )
     | true
