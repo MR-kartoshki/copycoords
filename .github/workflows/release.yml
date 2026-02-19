@@ -163,15 +163,42 @@ jobs:
               dependencies: $deps
             }')"
 
-          CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
-            -H "Authorization: ${MODRINTH_TOKEN}" \
-            "https://api.modrinth.com/v2/project/${PROJECT_ID}/version/${VERSION_NUMBER}")"
-          if [[ "$CHECK_STATUS" == "200" ]]; then
+          LOADERS_JSON='["fabric"]'
+          LOADERS_ENC="$(printf '%s' "$LOADERS_JSON" | jq -sRr @uri)"
+          GAME_VERSIONS_ENC="$(jq -cn --arg mc "$MC_VERSION" '[ $mc ]' | jq -sRr @uri)"
+
+          CHECK_URL="https://api.modrinth.com/v2/project/${PROJECT_ID}/version?loaders=${LOADERS_ENC}&game_versions=${GAME_VERSIONS_ENC}&include_changelog=false"
+
+          CHECK_STATUS=""
+          for ATTEMPT in 1 2 3; do
+            CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
+              -H "Authorization: ${MODRINTH_TOKEN}" \
+              "${CHECK_URL}")"
+
+            if [[ "$CHECK_STATUS" == "200" ]]; then
+              break
+            fi
+
+            if [[ "$CHECK_STATUS" == "429" || "$CHECK_STATUS" == "500" || "$CHECK_STATUS" == "502" || "$CHECK_STATUS" == "503" || "$CHECK_STATUS" == "504" ]]; then
+              if [[ "$ATTEMPT" -lt 3 ]]; then
+                echo "Transient Modrinth check failure (HTTP ${CHECK_STATUS}), retrying (${ATTEMPT}/3)..."
+                sleep $((ATTEMPT * 2))
+                continue
+              fi
+            fi
+
+            break
+          done
+
+          if [[ "$CHECK_STATUS" != "200" ]]; then
+            echo "::error::Failed to check existing Modrinth versions (HTTP ${CHECK_STATUS})."
+            cat /tmp/modrinth-check.json || true
+            exit 1
+          fi
+
+          if jq -e --arg vn "$VERSION_NUMBER" 'any(.[]; .version_number == $vn)' /tmp/modrinth-check.json > /dev/null; then
             echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload."
             exit 0
-          elif [[ "$CHECK_STATUS" != "404" ]]; then
-            echo "::warning::Unexpected response while checking existing version (${CHECK_STATUS})."
-            cat /tmp/modrinth-check.json || true
           fi
 
           echo "Uploading ${PRIMARY_JAR} for game version ${MC_VERSION} as ${VERSION_NUMBER}"
