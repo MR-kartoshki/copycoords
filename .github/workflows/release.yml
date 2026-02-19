@@ -9,11 +9,8 @@ on:
       skip_modrinth:
         description: 'Skip Modrinth upload'
         required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
+        default: false
+        type: boolean
       release_tag:
         description: 'Tag name for GitHub Release when run manually (example: v1.4.0)'
         required: false
@@ -84,7 +81,7 @@ jobs:
           printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
 
       - name: Publish to Modrinth
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true')
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != true)
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         shell: bash
