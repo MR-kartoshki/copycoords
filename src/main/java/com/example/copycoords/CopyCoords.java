@@ -103,7 +103,7 @@ public class CopyCoords implements ClientModInitializer {
         int x = player.blockPosition().getX();
         int y = player.blockPosition().getY();
         int z = player.blockPosition().getZ();
-        String coordString = x + " " + y + " " + z;
+        String coordString = formatCoordinates(x, y, z, player);
 
         // Print coordinates to chat
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.coords_printed", coordString));
@@ -298,6 +298,29 @@ public class CopyCoords implements ClientModInitializer {
             Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.msg_failed", target, errorMsg));
             return 0;
         }
+    }
+
+    // Helper method to get dimension name from player's current dimension
+    private static String getDimensionName(Player player) {
+        if (player.level().dimension().equals(Level.OVERWORLD)) {
+            return "Overworld";
+        } else if (player.level().dimension().equals(Level.NETHER)) {
+            return "Nether";
+        } else if (player.level().dimension().equals(Level.END)) {
+            return "End";
+        }
+        // Fallback for unknown dimensions
+        return player.level().dimension().toString();
+    }
+
+    // Helper method to format coordinates with optional dimension
+    private static String formatCoordinates(int x, int y, int z, Player player) {
+        CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
+        String coordString = format.format(x, y, z);
+        if (CopyCoords.config.showDimensionInCoordinates) {
+            coordString += " (" + getDimensionName(player) + ")";
+        }
+        return coordString;
     }
 
     private void copyToClipboardWithFeedback(String text) {

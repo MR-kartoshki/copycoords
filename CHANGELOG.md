@@ -2,11 +2,26 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.3.2] - Not yet released
+## [1.3.2] - 2026-02-19
 
 ### Added
-- Cross-Platform Clipboard Support - clipboard functions now support linux and mac.
-- Language support for German, Spanish, French, Japanese, Portuguese, Russian and Simplified Chinese
+- **Cross-Platform Clipboard Support** — clipboard functions now work on Windows, macOS, and Linux
+  - Windows: Uses `clip.exe` (built-in)
+  - macOS: Uses `pbcopy` (built-in)
+  - Linux: Uses `xclip` or `xsel` (install via package manager)
+- **Dimension Indicator** — coordinates now optionally show which dimension you're in (Overworld, Nether, End)
+  - New `showDimensionInCoordinates` config option (enabled by default)
+  - Toggleable in Mod Menu
+- **Configurable Coordinate Format** — choose how coordinates are displayed
+  - Space-separated: `100 64 200` (default)
+  - Bracket-comma: `[100, 64, 200]`
+  - XYZ labels: `X:100 Y:64 Z:200`
+  - New `coordinateFormat` config option
+  - Format selector in Mod Menu
+- **Multi-Language Support** — now available in 8 languages
+  - English, Spanish, French, German
+  - Chinese (Simplified), Japanese, Portuguese (Brazilian), Russian
+  - Automatic language detection based on game settings
 
 ## [1.3.1] - 2026-02-18
 

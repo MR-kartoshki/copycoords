@@ -48,6 +48,29 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> CopyCoords.config.copyConvertedToClipboard = newValue)
                     .build());
 
+            // Add toggle option for showing dimension in coordinates
+            general.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Show dimension in coordinates"),
+                            CopyCoords.config.showDimensionInCoordinates)
+                    .setDefaultValue(true)
+                    .setTooltip(Component.literal("If enabled, the dimension (Overworld, Nether, End) will be shown when copying coordinates."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.showDimensionInCoordinates = newValue)
+                    .build());
+
+            // Add selector for coordinate format
+            CoordinateFormat currentFormat = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
+            general.addEntry(entryBuilder.startSelector(
+                            Component.literal("Coordinate format"),
+                            CoordinateFormat.values(),
+                            currentFormat)
+                    .setDefaultValue(CoordinateFormat.SPACE_SEPARATED)
+                    .setTooltip(Component.literal("Choose how coordinates are displayed:\n" +
+                            "Space: 100 64 200\n" +
+                            "Bracket: [100, 64, 200]\n" +
+                            "XYZ: X:100 Y:64 Z:200"))
+                    .setSaveConsumer(newFormat -> CopyCoords.config.coordinateFormat = newFormat.getId())
+                    .build());
+
             // Save config to file when changes are applied
             builder.setSavingRunnable(() -> CopyCoords.config.save());
 

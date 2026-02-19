@@ -4,9 +4,9 @@
 - [x] Additional language translations - Only English exists. Adding more languages would help international players.
 
 ## Medium Priority
-- [ ] Dimension indicator in output - When copying coords, it doesn't show which dimension you're currently in (useful when sharing).
+- [x] Dimension indicator in output - When copying coords, it doesn't show which dimension you're currently in (useful when sharing).
 
-- [ ] Configurable coordinate format - No way to customize output (e.g., [100, 64, 200] vs X:100 Y:64 Z:200 vs current 100 64 200).
+- [x] Configurable coordinate format - No way to customize output (e.g., [100, 64, 200] vs X:100 Y:64 Z:200 vs current 100 64 200).
 
 - [ ] Coordinate bookmarks/history - No way to save favorite locations or view recently copied coordinates.
 

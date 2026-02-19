@@ -2,6 +2,7 @@ package com.example.copycoords;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -13,8 +14,16 @@ public class CopyCoordsConfig {
 
     public boolean copyToClipboard = true;
     public boolean copyConvertedToClipboard = true;
+    public boolean showDimensionInCoordinates = true;
+    public String coordinateFormat = "space"; // "space", "bracket", or "xyz"
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(CoordinateFormat.class, (JsonDeserializer<CoordinateFormat>) (json, typeOfT, context) -> {
+                String value = json.getAsString();
+                return CoordinateFormat.fromId(value);
+            })
+            .create();
 
     private static Path configPath;
 

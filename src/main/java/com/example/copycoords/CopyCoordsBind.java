@@ -6,6 +6,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -44,7 +46,13 @@ public class CopyCoordsBind {
         int x = minecraft.player.blockPosition().getX();
         int y = minecraft.player.blockPosition().getY();
         int z = minecraft.player.blockPosition().getZ();
-        String coordString = x + " " + y + " " + z;
+        
+        // Format coordinates according to config
+        CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
+        String coordString = format.format(x, y, z);
+        if (CopyCoords.config.showDimensionInCoordinates) {
+            coordString += " (" + getDimensionName(minecraft.player) + ")";
+        }
 
         try {
             // Copy coordinates to clipboard using cross-platform utility
@@ -117,5 +125,18 @@ public class CopyCoordsBind {
         }
 
         throw new IllegalStateException("No compatible KeyMapping constructor found.");
+    }
+
+    // Helper method to get dimension name from player's current dimension
+    private static String getDimensionName(Player player) {
+        if (player.level().dimension().equals(Level.OVERWORLD)) {
+            return "Overworld";
+        } else if (player.level().dimension().equals(Level.NETHER)) {
+            return "Nether";
+        } else if (player.level().dimension().equals(Level.END)) {
+            return "End";
+        }
+        // Fallback for unknown dimensions
+        return player.level().dimension().toString();
     }
 }

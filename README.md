@@ -1,58 +1,95 @@
 # CopyCoords
 
-CopyCoords is a small Fabric mod for Minecraft 1.21.x that makes it quick and easy to get, share, and convert coordinates.
+A simple mod that makes sharing Minecraft coordinates less of a hassle. Copy, convert, send - that's it.
 
-Whether you're pasting a location into chat, coordinating building projects across dimensions, or just bookmarking a base, CopyCoords saves a few clicks.
+Whether you're coordinating builds across dimensions, sharing base locations in chat, or just tired of manually typing coordinates, CopyCoords saves you a bunch of clicks.
 
 ## Features
 
-- `/copycoords` — prints your current block coordinates in chat and can copy them to your system clipboard.
-- Keybind — press **C** (default) to copy your coordinates instantly.
-- `/convertcoords` — convert coordinates between the Overworld and the Nether, with optional clipboard copying.
-- `/msgcoords` — send your coordinates to another player, with optional dimension conversion.
-- Configurable — toggle automatic clipboard copying for both commands in Mod Menu.
-- Localized — supports translations for chat messages.
+- `/copycoords` - Get your current coordinates in chat. Optionally copies to clipboard.
+- **C key** (default) - Quick copy keybind without opening chat.
+- `/convertcoords` - Convert coordinates between Overworld and Nether (8:1 scale).
+- `/msgcoords` - Send your coords to another player, with optional dimension conversion.
+- **Works on Windows, Mac, and Linux** - Clipboard support built in for all platforms.
+- **Shows current dimension** - See which world you're in when you copy (Overworld, Nether, End).
+- **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.
+- **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
+- **Customizable in-game** - Open Mod Menu to tweak settings without editing JSON.
 
-## Convert coordinates between dimensions
+## Coordinate Conversion
 
-Use `/convertcoords [goal] [x] [y] [z]` to convert coordinates between Overworld and Nether.
+Wanna check your Nether coordinates in the Overworld? Use `/convertcoords`.
 
-- `goal` — `overworld` or `nether` (autocomplete is supported).
-- `x y z` — coordinates to convert; you can use relative coordinates with `~` (for example `~ ~1 ~-2`).
-- Examples:
-  - `/convertcoords nether 100 64 200` converts Overworld 100 64 200 → Nether (X/Z divided by 8).
-  - `/convertcoords overworld ~ ~ ~` converts your current position from Nether → Overworld (X/Z multiplied by 8).
+```
+/convertcoords [goal] [x] [y] [z]
+```
 
-Notes: Conversion uses the standard 8:1 X/Z scaling between Overworld and Nether. Y is preserved and rounded to the nearest block. Converted coordinates can be automatically copied to your clipboard (enabled by default).
+- **goal** - `overworld` or `nether`
+- **coordinates** - Numbers or `~` for relative (e.g., `~ ~1 ~-5`)
 
-## Usage
+Examples:
+- `/convertcoords nether 100 64 200` - Convert those Overworld coords to Nether
+- `/convertcoords overworld ~ ~ ~` - Convert your current position from Nether to Overworld
 
-- `/copycoords [goal]` — print and optionally copy current coordinates. When `goal` is provided, converts your current position to the target dimension.
-- `/convertcoords [goal] [x] [y] [z]` — convert coordinates between dimensions.
-- `/msgcoords [player] [goal]` — send your coordinates to another player, optionally converted to a target dimension.
-- Keybind — press **C** to copy coordinates without typing.
+The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
+
+## Commands
+
+- `/copycoords` - Print your current coordinates
+- `/copycoords [dimension]` - Print and convert to another dimension
+- `/convertcoords [dimension] [x] [y] [z]` - Convert specific coordinates
+- `/msgcoords [player]` - Send your coordinates to another player
+- `/msgcoords [player] [dimension]` - Send converted coordinates to a player
+- **C key** - Quick copy without opening chat
 
 ## Installation
 
-1. Install Fabric Loader for Minecraft 1.21.x: https://fabricmc.net/use/installer/.
-2. Install required dependencies (Fabric API, Cloth Config, Mod Menu).
-3. Drop `copycoords-<version>.jar` into your `mods` folder.
+1. Install [Fabric Loader](https://fabricmc.net/use/installer/) for Minecraft 1.21.x
+2. Install the dependencies: Fabric API, Cloth Config, Mod Menu
+3. Drop `copycoords-<version>.jar` into your `mods` folder
+4. Launch the game and enjoy
 
 ## Configuration
 
-Config file: `%APPDATA%/.minecraft/config/copycoords.json`
+Config is at `%APPDATA%/.minecraft/config/copycoords.json`. But honestly, just use Mod Menu to configure everything - it's easier.
 
 ```json
 {
   "copyToClipboard": true,
-  "copyConvertedToClipboard": true
+  "copyConvertedToClipboard": true,
+  "showDimensionInCoordinates": true,
+  "coordinateFormat": "space"
 }
 ```
 
-- Set `copyToClipboard` to `false` to only show coordinates in chat (for `/copycoords` command).
-- Set `copyConvertedToClipboard` to `false` to only show converted coordinates in chat (for `/convertcoords` command).
+**What each option does:**
 
-Both options can also be toggled in the Mod Menu configuration GUI.
+- `copyToClipboard` - Auto-copy when you use `/copycoords`
+- `copyConvertedToClipboard` - Auto-copy when you use `/convertcoords`
+- `showDimensionInCoordinates` - Include dimension name in output (e.g., `100 64 200 (Overworld)`)
+- `coordinateFormat` - How to display coords:
+  - `"space"` - `100 64 200`
+  - `"bracket"` - `[100, 64, 200]`
+  - `"xyz"` - `X:100 Y:64 Z:200`
+
+## Languages & Platforms
+
+CopyCoords supports 8 languages. The game language is detected automatically:
+
+- 🇬🇧 English
+- 🇪🇸 Spanish
+- 🇫🇷 French
+- 🇩🇪 German
+- 🇨🇳 Chinese
+- 🇯🇵 Japanese
+- 🇧🇷 Portuguese
+- 🇷🇺 Russian
+
+**Platform support:**
+
+- **Windows** - Clipboard works out of the box
+- **Mac** - Clipboard works out of the box
+- **Linux** - Install `xclip` with `sudo apt install xclip` (Ubuntu/Debian)
 
 ## License
 
