@@ -1,7 +1,5 @@
 {
-  "key.categories.copycoords": "CopyCoords",
-  "key.category.copycoords.copycoords": "CopyCoords",
-  "key.copycoords.copy": "座標をコピー",
+  "key.category.copycoords.keybinds": "CopyCoords",  "key.copycoords.copy": "座標をコピー",
   "key.copycoords.copy_converted": "変換された座標をコピー",
   "key.copycoords.copy_with_dimension": "ディメンション情報付き座標をコピー",
   "title.copycoords.config": "CopyCoords 設定",

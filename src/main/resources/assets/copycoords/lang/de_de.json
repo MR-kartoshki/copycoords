@@ -1,6 +1,5 @@
 {
-  "key.categories.copycoords": "CopyCoords",
-  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.category.copycoords.keybinds": "CopyCoords",
   "key.copycoords.copy": "Koordinaten Kopieren",
   "key.copycoords.copy_converted": "Konvertierte Koordinaten Kopieren",
   "key.copycoords.copy_with_dimension": "Koordinaten mit Dimension Kopieren",

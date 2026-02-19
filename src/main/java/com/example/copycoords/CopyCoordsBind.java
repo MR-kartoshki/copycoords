@@ -6,50 +6,156 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import com.mojang.blaze3d.platform.InputConstants;
 
 // Handles keybinding registration and execution for copying coordinates via keyboard shortcut
 public class CopyCoordsBind {
-    // The key mapping for the copy coordinates keybind
     private static KeyMapping copyKeyBinding;
-    // The key mapping for copying converted coordinates (nether/overworld)
     private static KeyMapping copyConvertedKeyBinding;
-    // The key mapping for copying with dimension name
     private static KeyMapping copyWithDimensionKeyBinding;
+    
+    // Single category key for all keybinds
+    private static final String CATEGORY_KEY = "key.category.copycoords.keybinds";
+    
+    // Detect if KeyMapping.Category exists (1.21.9+)
+    private static final boolean HAS_KEY_MAPPING_CATEGORY = detectKeyMappingCategory();
+    
+    // Cached category object (for versions that use Category) - created once and reused
+    private static Object cachedCategory = null;
+    
+    private static boolean detectKeyMappingCategory() {
+        try {
+            Class.forName("net.minecraft.client.KeyMapping$Category");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 
-    // Register the keybind and set up the tick event listener
     @SuppressWarnings("null")
     public static void register() {
-        // Create a custom keybind category for this mod
-        Object copyCategory = createKeyCategory("copycoords:copycoords");
-        // Register the keybind with default key 'C'
         copyKeyBinding = KeyBindingHelper.registerKeyBinding(
-            createKeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C, copyCategory)
-        );
-        // Register the keybind for converted coordinates with default key 'V'
+            createKeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C));
+        
         copyConvertedKeyBinding = KeyBindingHelper.registerKeyBinding(
-            createKeyMapping("key.copycoords.copy_converted", GLFW.GLFW_KEY_V, copyCategory)
-        );
-        // Register the keybind for copying with dimension name with default key 'B'
+            createKeyMapping("key.copycoords.copy_converted", GLFW.GLFW_KEY_V));
+        
         copyWithDimensionKeyBinding = KeyBindingHelper.registerKeyBinding(
-            createKeyMapping("key.copycoords.copy_with_dimension", GLFW.GLFW_KEY_B, copyCategory)
-        );
-
+            createKeyMapping("key.copycoords.copy_with_dimension", GLFW.GLFW_KEY_B));
+        
         // Listen for key presses each client tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (copyKeyBinding.consumeClick()) {
-                executeKeybindCopy(client);
+            if (copyKeyBinding != null) {
+                while (copyKeyBinding.consumeClick()) {
+                    executeKeybindCopy(client);
+                }
             }
-            while (copyConvertedKeyBinding.consumeClick()) {
-                executeKeybindCopyConverted(client);
+            if (copyConvertedKeyBinding != null) {
+                while (copyConvertedKeyBinding.consumeClick()) {
+                    executeKeybindCopyConverted(client);
+                }
             }
-            while (copyWithDimensionKeyBinding.consumeClick()) {
-                executeKeybindCopyWithDimension(client);
+            if (copyWithDimensionKeyBinding != null) {
+                while (copyWithDimensionKeyBinding.consumeClick()) {
+                    executeKeybindCopyWithDimension(client);
+                }
             }
         });
+    }
+    
+    /**
+     * Get or create the shared category for all CopyCoords keybinds.
+     * For versions with KeyMapping.Category (1.21.9+): Creates a Category object once and caches it.
+     * This ensures all keybinds share the same category instance, so they appear in one UI group.
+     */
+    private static Object getOrCreateCategory() {
+        if (cachedCategory != null) {
+            return cachedCategory;
+        }
+        
+        try {
+            Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
+            
+            // Inspect what constructor Category has
+            java.lang.reflect.Constructor<?>[] constructors = categoryClass.getConstructors();
+            if (constructors.length == 0) {
+                throw new RuntimeException("No public constructors found for KeyMapping.Category");
+            }
+            
+            // Get the first constructor and its parameter type
+            java.lang.reflect.Constructor<?> categoryConstructor = constructors[0];
+            Class<?>[] paramTypes = categoryConstructor.getParameterTypes();
+            if (paramTypes.length != 1) {
+                throw new RuntimeException("Expected Category constructor to have 1 parameter, found: " + paramTypes.length);
+            }
+            
+            // Get the actual class of the parameter (ResourceLocation)
+            Class<?> resourceLocationClass = paramTypes[0];
+            
+            // Create ResourceLocation instance using the actual runtime class
+            Object resourceLocation = null;
+            
+            // Try fromNamespaceAndPath factory method first (modern Mojang API)
+            try {
+                resourceLocation = resourceLocationClass
+                    .getMethod("fromNamespaceAndPath", String.class, String.class)
+                    .invoke(null, "copycoords", "keybinds");
+            } catch (NoSuchMethodException e1) {
+                // Try parse method
+                try {
+                    resourceLocation = resourceLocationClass
+                        .getMethod("parse", String.class)
+                        .invoke(null, "copycoords:keybinds");
+                } catch (NoSuchMethodException e2) {
+                    // Try two-argument constructor
+                    try {
+                        resourceLocation = resourceLocationClass
+                            .getConstructor(String.class, String.class)
+                            .newInstance("copycoords", "keybinds");
+                    } catch (NoSuchMethodException e3) {
+                        throw new RuntimeException("Could not create ResourceLocation with any known method", e1);
+                    }
+                }
+            }
+            
+            // Create category with ResourceLocation and cache it
+            cachedCategory = categoryConstructor.newInstance(resourceLocation);
+            return cachedCategory;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create category: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Create a KeyMapping with the appropriate category for this Minecraft version.
+     * 1.21.9+: Uses the shared KeyMapping.Category object
+     * 1.21.0-1.21.8: Uses String category key
+     */
+    private static KeyMapping createKeyMapping(String translationKey, int keyCode) {
+        if (HAS_KEY_MAPPING_CATEGORY) {
+            // 1.21.9+: Use the shared category object
+            try {
+                Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
+                Object category = getOrCreateCategory();
+                
+                // Create KeyMapping with the shared category
+                java.lang.reflect.Constructor<KeyMapping> ctor = 
+                    KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, categoryClass);
+                return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, category);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create KeyMapping with Category: " + e.getMessage(), e);
+            }
+        } else {
+            // 1.21.0-1.21.8: Use String category key constructor
+            try {
+                java.lang.reflect.Constructor<KeyMapping> ctor = 
+                    KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, String.class);
+                return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, CATEGORY_KEY);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create KeyMapping with String category: " + e.getMessage(), e);
+            }
+        }
     }
 
     // Execute coordinate copying when keybind is pressed
@@ -72,8 +178,10 @@ public class CopyCoordsBind {
         try {
             // Copy coordinates to clipboard using cross-platform utility
             ClipboardUtils.copyToClipboard(coordString);
-            // Notify player of successful copy
-            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied", coordString));
+            // Notify player of successful copy with clickable component
+            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates to clipboard: ");
+            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
             CopyCoords.addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             // Handle clipboard copy errors
@@ -131,8 +239,10 @@ public class CopyCoordsBind {
         try {
             // Copy converted coordinates to clipboard
             ClipboardUtils.copyToClipboard(coordString);
-            // Notify player of successful copy with converted coordinates
-            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied_converted", coordString));
+            // Notify player of successful copy with clickable component
+            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied converted coordinates to clipboard: ");
+            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, convertedX, y, convertedZ, convertedDimensionId);
+            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
             CopyCoords.addHistoryEntry(convertedX, y, convertedZ, convertedDimensionId);
         } catch (Exception e) {
             // Handle clipboard copy errors
@@ -167,8 +277,10 @@ public class CopyCoordsBind {
         try {
             // Copy coordinates with dimension to clipboard
             ClipboardUtils.copyToClipboard(coordString);
-            // Notify player of successful copy
-            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied_with_dimension", coordString));
+            // Notify player of successful copy with clickable component
+            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates with dimension to clipboard: ");
+            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
             CopyCoords.addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             // Handle clipboard copy errors
@@ -178,78 +290,6 @@ public class CopyCoordsBind {
             }
             minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.failed", errorMsg));
         }
-    }
-
-    // Use reflection to stay compatible across 1.21.1 and 1.21.11 keybinding APIs
-    private static Object createKeyCategory(String id) {
-        try {
-            Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
-            Class<?> identifierClass;
-            try {
-                identifierClass = Class.forName("net.minecraft.resources.Identifier");
-            } catch (ClassNotFoundException e) {
-                identifierClass = Class.forName("net.minecraft.util.Identifier");
-            }
-            Method tryParse = identifierClass.getMethod("tryParse", String.class);
-            Object identifier = tryParse.invoke(null, id);
-            Method register = categoryClass.getMethod("register", identifierClass);
-            return register.invoke(null, identifier);
-        } catch (Exception e) {
-            // Fall back to a category string if the Category API is unavailable
-            return "key.categories.copycoords";
-        }
-    }
-
-    private static KeyMapping createKeyMapping(String translationKey, int keyCode, Object category) {
-        String categoryKey = "key.categories.copycoords";
-
-        for (Constructor<?> ctor : KeyMapping.class.getDeclaredConstructors()) {
-            Class<?>[] params = ctor.getParameterTypes();
-            try {
-                ctor.setAccessible(true);
-
-                if (params.length == 3
-                    && params[0] == String.class
-                    && params[1] == int.class
-                    && params[2] == String.class) {
-                    return (KeyMapping) ctor.newInstance(translationKey, keyCode, categoryKey);
-                }
-                if (params.length == 3
-                    && params[0] == String.class
-                    && params[1] == int.class
-                    && params[2].getName().endsWith("KeyMapping$Category")) {
-                    return (KeyMapping) ctor.newInstance(translationKey, keyCode, category);
-                }
-                if (params.length == 4
-                    && params[0] == String.class
-                    && params[1].getName().equals("com.mojang.blaze3d.platform.InputConstants$Type")
-                    && params[2] == int.class) {
-                    if (params[3] == String.class) {
-                        return (KeyMapping) ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, categoryKey);
-                    }
-                    if (params[3].getName().endsWith("KeyMapping$Category")) {
-                        return (KeyMapping) ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, category);
-                    }
-                }
-
-                // Newer variants may take InputConstants$Key directly
-                if (params.length == 3
-                    && params[0] == String.class
-                    && params[1].getName().equals("com.mojang.blaze3d.platform.InputConstants$Key")) {
-                    Object key = InputConstants.Type.KEYSYM.getOrCreate(keyCode);
-                    if (params[2] == String.class) {
-                        return (KeyMapping) ctor.newInstance(translationKey, key, categoryKey);
-                    }
-                    if (params[2].getName().endsWith("KeyMapping$Category")) {
-                        return (KeyMapping) ctor.newInstance(translationKey, key, category);
-                    }
-                }
-            } catch (Exception ignored) {
-                // Try next constructor
-            }
-        }
-
-        throw new IllegalStateException("No compatible KeyMapping constructor found.");
     }
 
 }

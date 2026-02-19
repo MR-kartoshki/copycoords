@@ -97,6 +97,12 @@ public class CopyCoords implements ClientModInitializer {
             builder.then(copyGoalArg);
             dispatcher.register(builder);
 
+            // Alias: /cc -> /copycoords (shortcut requested in TODO)
+            LiteralArgumentBuilder<FabricClientCommandSource> cc = ClientCommandManager.literal("cc");
+            cc.executes(context -> executeCopyCoords(context));
+            cc.then(copyGoalArg);
+            dispatcher.register(cc);
+
             // Register /msgcoords <player> [goal]
             LiteralArgumentBuilder<FabricClientCommandSource> msg = ClientCommandManager.literal("msgcoords");
             RequiredArgumentBuilder<FabricClientCommandSource, String> playerArg =
@@ -187,8 +193,10 @@ public class CopyCoords implements ClientModInitializer {
         String dimensionId = getDimensionId(player);
         String coordString = formatCoordinates(x, y, z, dimensionId);
 
-        // Print coordinates to chat
-        Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.coords_printed", coordString));
+        // Print coordinates to chat with clickable component
+        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Your current coordinates are: ");
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
 
         // Copy to clipboard if enabled in config
         if (config.copyToClipboard) {
@@ -218,7 +226,11 @@ public class CopyCoords implements ClientModInitializer {
 
         String dimensionId = getDimensionIdForGoal(goal);
         String coordString = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
-        Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", coordString));
+        
+        // Display converted coordinates with clickable component
+        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
 
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(coordString, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
@@ -266,7 +278,11 @@ public class CopyCoords implements ClientModInitializer {
 
         String dimensionId = getDimensionIdForGoal(goal);
         String out = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
-        Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", out));
+        
+        // Display converted coordinates with clickable component
+        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(out, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
 
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(out, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);

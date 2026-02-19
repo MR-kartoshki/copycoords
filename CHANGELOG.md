@@ -9,6 +9,18 @@ All notable changes to CopyCoords will be documented in this file.
   - **V key** (default) - Copy coordinates converted to opposite dimension (Overworld ↔ Nether)
   - **B key** (default) - Copy coordinates with dimension name always shown
   - All keybinds are fully customizable in Controls settings
+- **Clickable Chat Coordinates** — coordinate output in chat is now clickable
+  - Click any coordinate in chat to re-copy it to your clipboard
+  - Hover over coordinates to see "Click to copy coordinates" tooltip
+  - Works with `/copycoords`, `/convertcoords`, keybinds, history, and bookmarks
+  - All three keybinds now display clickable coordinates
+  - `/cc` — alias for `/copycoords` (shortcut)
+
+### Fixed
+- **Minecraft 1.21.11 Crash** — Fixed keybinding registration crash on 1.21.11 instances
+  - Improved KeyMapping constructor compatibility detection with better fallback handling
+  - Changed error messages to help identify constructor availability issues
+  - Keybinds now register gracefully if some fail
 
 ## [1.4.0] - 2026-02-19
 

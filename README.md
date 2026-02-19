@@ -6,11 +6,12 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 
 ## Features
 
-- `/copycoords` - Get your current coordinates in chat. Optionally copies to clipboard.
+- `/copycoords` (alias: `/cc`) - Get your current coordinates in chat. Optionally copies to clipboard.
 - **Keybinds** for lightning-fast coordinate copying:
   - **C key** (default) - Quick copy without opening chat
   - **V key** (default) - Copy converted coordinates (Overworld ↔ Nether)
   - **B key** (default) - Copy with dimension name always included
+- **Clickable Coordinates** - Click any coordinate in chat to re-copy it to your clipboard. Hover to see the tooltip.
 - `/convertcoords` - Convert coordinates between Overworld and Nether (8:1 scale).
 - `/msgcoords` - Send your coords to another player, with optional dimension conversion.
 - `/distcalc` - Calculate distance and direction between two coordinate sets, with bearing and cardinal directions.
@@ -39,7 +40,7 @@ The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
 
 ## Commands
 
-- `/copycoords` - Print your current coordinates
+- `/copycoords` (alias: `/cc`) - Print your current coordinates
 - `/copycoords [dimension]` - Print and convert to another dimension
 - `/convertcoords [dimension] [x] [y] [z]` - Convert specific coordinates
 - `/msgcoords [player]` - Send your coordinates to another player

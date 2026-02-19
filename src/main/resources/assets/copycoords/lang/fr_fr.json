@@ -1,7 +1,5 @@
 {
-  "key.categories.copycoords": "CopyCoords",
-  "key.category.copycoords.copycoords": "CopyCoords",
-  "key.copycoords.copy": "Copier les Coordonnées",
+  "key.category.copycoords.keybinds": "CopyCoords",  "key.copycoords.copy": "Copier les Coordonnées",
   "key.copycoords.copy_converted": "Copier les Coordonnées Converties",
   "key.copycoords.copy_with_dimension": "Copier les Coordonnées avec Dimension",
   "title.copycoords.config": "Configuration de CopyCoords",

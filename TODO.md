@@ -15,9 +15,8 @@
 - [x] Additional keybinds - Only one keybind for basic copy. Could add keybinds for "copy converted to nether/overworld" or "copy with dimension name".
 
 ## Nice to Have
-- [ ] Clickable chat coordinates - Make coordinate output clickable to re-copy or show on waypoint
-- [ ] Waypoint mod integration - Integration with Xaero's Minimap, JourneyMap, etc.
+- [x] Clickable chat coordinates - Make coordinate output clickable to re-copy or show on waypoint
 - [ ] Decimal precision option - Currently always rounds to integers
-- [ ] Copy to chat input - Paste coords into chat box instead of sending as message
+- [ ] Copy to chat input - Paste coords into chat box instead of sending as message (configurable in config/mod menu)
 - [ ] Config GUI improvements - Add keybind customization, format templates, etc.
-- [ ] /cc command - /copycoords shortcut
+- [x] /cc command - /copycoords shortcut

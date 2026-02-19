@@ -34,3 +34,7 @@ Thumbs.db
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
 *.zip
+client_output.txt
+debug_id.txt
+id_test.txt
+test_output.txt

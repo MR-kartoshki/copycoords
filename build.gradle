@@ -1,5 +1,4 @@
-// Stonecutter + Fabric Loom Multi-Version Build Configuration
-
+// fuck gradle frfr
 import java.util.Properties
 
 plugins {
@@ -171,6 +170,62 @@ loom {
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation"
+}
+
+// Verification task to ensure Mojang mappings are used (NO YARN)
+tasks.register("verifyMojangMappings") {
+    group = "verification"
+    description = "Verifies that all projects use officialMojangMappings and not Yarn"
+    
+    doLast {
+        def allProjects = [project] + project.subprojects
+        def failed = false
+        def results = []
+        
+        println "="*60
+        println "MAPPINGS VERIFICATION REPORT"
+        println "="*60
+        
+        allProjects.each { proj ->
+            def mappingConfig = proj.configurations.findByName("mappings")
+            if (mappingConfig != null) {
+                def deps = mappingConfig.allDependencies.collect { 
+                    "${it.group}:${it.name}:${it.version}"
+                }
+                
+                // Check for yarn in dependencies
+                def hasYarn = deps.any { it.toLowerCase().contains("yarn") }
+                
+                if (hasYarn) {
+                    failed = true
+                    results << "❌ FAIL: ${proj.path} uses YARN mappings!"
+                    deps.each { results << "    - ${it}" }
+                } else {
+                    results << "✓ PASS: ${proj.path} uses Mojang mappings"
+                    deps.each { results << "    - ${it}" }
+                }
+            }
+        }
+        
+        results.each { println it }
+        
+        println "="*60
+        println "SOURCE: build.gradle line 153 declares: loom.officialMojangMappings()"
+        println "APPLIED TO: Root project (inherited by all Stonecutter subprojects)"
+        println "VERSIONS COVERED: 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11"
+        println "="*60
+        
+        if (failed) {
+            throw new GradleException("❌ MAPPINGS VERIFICATION FAILED: Yarn detected in dependencies!")
+        } else {
+            println "✅ SUCCESS: All projects use Mojang official mappings"
+        }
+    }
+}
+
+// Make build tasks depend on mappings verification
+tasks.named("build").configure {
+    dependsOn "verifyMojangMappings"
 }
 
 publishing {

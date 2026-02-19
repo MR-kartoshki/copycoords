@@ -1,7 +1,5 @@
 {
-  "key.categories.copycoords": "CopyCoords",
-  "key.category.copycoords.copycoords": "CopyCoords",
-  "key.copycoords.copy": "复制坐标",
+  "key.category.copycoords.keybinds": "CopyCoords",  "key.copycoords.copy": "复制坐标",
   "key.copycoords.copy_converted": "复制转换的坐标",
   "key.copycoords.copy_with_dimension": "复制带维度的坐标",
   "title.copycoords.config": "CopyCoords 配置",
