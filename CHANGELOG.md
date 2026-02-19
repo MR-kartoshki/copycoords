@@ -22,6 +22,12 @@ All notable changes to CopyCoords will be documented in this file.
   - English, Spanish, French, German
   - Chinese (Simplified), Japanese, Portuguese (Brazilian), Russian
   - Automatic language detection based on game settings
+- **Distance Calculator** — calculate distance and direction between two coordinate sets
+  - `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` - Calculate distance between absolute coordinates
+  - `/distcalc bookmarks [bookmark1] [bookmark2]` - Calculate distance between saved bookmarks
+  - Shows horizontal, vertical, and total 3D distance
+  - Provides bearing in degrees and cardinal direction (16-point compass)
+  - Displays Manhattan distance for reference
 
 ## [1.3.1] - 2026-02-18
 

@@ -138,6 +138,33 @@ public class CopyCoords implements ClientModInitializer {
                         .suggests(bookmarkSuggestions)
                         .executes(context -> executeBookmarkRemove(StringArgumentType.getString(context, "name")))));
                 dispatcher.register(bookmark);
+
+                // Register /distcalc for calculating distance between two coordinate sets
+                LiteralArgumentBuilder<FabricClientCommandSource> distcalc = ClientCommandManager.literal("distcalc");
+                
+                RequiredArgumentBuilder<FabricClientCommandSource, String> x1Arg =
+                    ClientCommandManager.argument("x1", StringArgumentType.word())
+                        .then(ClientCommandManager.argument("y1", StringArgumentType.word())
+                            .then(ClientCommandManager.argument("z1", StringArgumentType.word())
+                                .then(ClientCommandManager.argument("x2", StringArgumentType.word())
+                                    .then(ClientCommandManager.argument("y2", StringArgumentType.word())
+                                        .then(ClientCommandManager.argument("z2", StringArgumentType.word())
+                                            .executes(context -> executeDistanceCalc(context)))))));
+                
+                distcalc.then(x1Arg);
+                
+                // Also allow /distcalc <bookmark1> <bookmark2> format
+                RequiredArgumentBuilder<FabricClientCommandSource, String> bm1Arg =
+                    ClientCommandManager.argument("bookmark1", StringArgumentType.greedyString())
+                        .suggests(bookmarkSuggestions)
+                        .then(ClientCommandManager.argument("bookmark2", StringArgumentType.greedyString())
+                            .suggests(bookmarkSuggestions)
+                            .executes(context -> executeDistanceCalcBookmarks(context)));
+                
+                distcalc.then(ClientCommandManager.literal("bookmarks")
+                    .then(bm1Arg));
+                
+                dispatcher.register(distcalc);
         });
     }
 
@@ -286,7 +313,7 @@ public class CopyCoords implements ClientModInitializer {
     }
 
     // Helper method to parse coordinate strings that support ~ for relative coordinates
-    private double parseCoordinate(String input, double playerCoord) {
+    private static double parseCoordinate(String input, double playerCoord) {
         if (input.equals("~")) {
             // Relative to player coordinate
             return playerCoord;
@@ -607,5 +634,88 @@ public class CopyCoords implements ClientModInitializer {
         }
 
         return null;
+    }
+
+    // Execute /distcalc <x1> <y1> <z1> <x2> <y2> <z2> to calculate distance between two coordinate sets
+    private int executeDistanceCalc(CommandContext<FabricClientCommandSource> context) {
+        try {
+            int x1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "x1"), Minecraft.getInstance().player, "x");
+            int y1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "y1"), Minecraft.getInstance().player, "y");
+            int z1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "z1"), Minecraft.getInstance().player, "z");
+            int x2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "x2"), Minecraft.getInstance().player, "x");
+            int y2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "y2"), Minecraft.getInstance().player, "y");
+            int z2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "z2"), Minecraft.getInstance().player, "z");
+
+            DistanceCalculator.DistanceResult result = DistanceCalculator.calculate(x1, y1, z1, x2, y2, z2);
+            
+            // Format and display result
+            String message = "§6Distance Calculator§r: From [" + x1 + ", " + y1 + ", " + z1 + "] to [" + x2 + ", " + y2 + ", " + z2 + "]";
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal(message));
+            
+            String resultMessage = "§2" + DistanceCalculator.formatResult(result, true);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal(resultMessage));
+            
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("§cError calculating distance: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // Execute /distcalc bookmarks <bookmark1> <bookmark2> to calculate distance between bookmarks
+    private int executeDistanceCalcBookmarks(CommandContext<FabricClientCommandSource> context) {
+        try {
+            String bm1Name = StringArgumentType.getString(context, "bookmark1");
+            String bm2Name = StringArgumentType.getString(context, "bookmark2");
+            
+            CopyCoordsDataStore.BookmarkEntry bm1 = dataStore.getBookmark(bm1Name);
+            CopyCoordsDataStore.BookmarkEntry bm2 = dataStore.getBookmark(bm2Name);
+            
+            if (bm1 == null) {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.literal("§cBookmark not found: " + bm1Name));
+                return 0;
+            }
+            if (bm2 == null) {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.literal("§cBookmark not found: " + bm2Name));
+                return 0;
+            }
+            
+            DistanceCalculator.DistanceResult result = DistanceCalculator.calculate(bm1.x, bm1.y, bm1.z, bm2.x, bm2.y, bm2.z);
+            
+            // Format and display result
+            String message = "§6Distance Calculator§r: From '" + bm1Name + "' to '" + bm2Name + "'";
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal(message));
+            
+            String coordMessage = "  From [" + bm1.x + ", " + bm1.y + ", " + bm1.z + "] to [" + bm2.x + ", " + bm2.y + ", " + bm2.z + "]";
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal(coordMessage));
+            
+            String resultMessage = "§2" + DistanceCalculator.formatResult(result, true);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal(resultMessage));
+            
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("§cError calculating distance: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // Helper method to parse coordinates that can be absolute numbers, ~, or player position
+    private static int parseCoordOrPlayerCoord(String input, Player player, String coordType) {
+        if (player == null) {
+            throw new IllegalArgumentException("Player not found");
+        }
+        
+        double playerCoord;
+        if ("x".equals(coordType)) {
+            playerCoord = player.getX();
+        } else if ("y".equals(coordType)) {
+            playerCoord = player.getY();
+        } else if ("z".equals(coordType)) {
+            playerCoord = player.getZ();
+        } else {
+            throw new IllegalArgumentException("Invalid coordinate type: " + coordType);
+        }
+        
+        return (int) Math.floor(parseCoordinate(input, playerCoord));
     }
 }

@@ -10,6 +10,7 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 - **C key** (default) - Quick copy keybind without opening chat.
 - `/convertcoords` - Convert coordinates between Overworld and Nether (8:1 scale).
 - `/msgcoords` - Send your coords to another player, with optional dimension conversion.
+- `/distcalc` - Calculate distance and direction between two coordinate sets, with bearing and cardinal directions.
 - **Works on Windows, Mac, and Linux** - Clipboard support built in for all platforms.
 - **Shows current dimension** - See which world you're in when you copy (Overworld, Nether, End).
 - **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.
@@ -40,6 +41,8 @@ The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
 - `/convertcoords [dimension] [x] [y] [z]` - Convert specific coordinates
 - `/msgcoords [player]` - Send your coordinates to another player
 - `/msgcoords [player] [dimension]` - Send converted coordinates to a player
+- `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` - Calculate distance between two coordinate sets
+- `/distcalc bookmarks [bookmark1] [bookmark2]` - Calculate distance between saved bookmarks
 - **C key** - Quick copy without opening chat
 
 ## Installation

@@ -10,7 +10,7 @@
 
 - [x] Coordinate bookmarks/history - No way to save favorite locations or view recently copied coordinates.
 
-- [ ] Distance calculator - Can't calculate distance between two coordinate sets or get direction/bearing.
+- [x] Distance calculator - Can't calculate distance between two coordinate sets or get direction/bearing.
 
 - [ ] Additional keybinds - Only one keybind for basic copy. Could add keybinds for "copy converted to nether/overworld" or "copy with dimension name".
 
