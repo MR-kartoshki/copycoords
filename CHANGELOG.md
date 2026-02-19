@@ -2,7 +2,7 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.4.1] - 2026-02-20
+## [1.5.0] - 2026-02-20
 
 ### Added
 - **Additional Keybinds** — two new keybinds for faster coordinate workflows
