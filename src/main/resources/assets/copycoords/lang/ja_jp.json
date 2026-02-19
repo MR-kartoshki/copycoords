@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "座標をコピー",
+  "title.copycoords.config": "CopyCoords 設定",
+  "option.copycoords.copyToClipboard": "座標をクリップボードにコピー",
+  "option.copycoords.copyToClipboard@Tooltip": "有効にすると、/copycoords コマンドはチャットメッセージを送信した後、あなたの座標をシステムクリップボードにコピーします。",
+  "option.copycoords.copyConvertedToClipboard": "変換された座標をクリップボードにコピー",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "有効にすると、/convertcoords コマンドは変換された座標をシステムクリップボードにコピーします。",
+  "message.copycoords.command.no_player": "位置を読み込めません。プレイヤーが読み込まれていません。",
+  "message.copycoords.command.coords_printed": "現在の座標: %s",
+  "message.copycoords.command.copied": "座標をクリップボードにコピーしました。",
+  "message.copycoords.command.copy_failed": "座標をクリップボードにコピーできませんでした: %s",
+  "message.copycoords.keybind.copied": "座標をクリップボードにコピーしました: %s",
+  "message.copycoords.keybind.failed": "座標をクリップボードにコピーできませんでした: %s",
+  "message.copycoords.command.converted": "変換された座標: %s",
+  "message.copycoords.command.unknown_goal": "不明なターゲットディメンション: %s (overworld または nether を使用)",
+  "message.copycoords.command.unsupported_dimension": "このディメンションでは座標を変換できません (オーバーワールドとネザーのみサポート)。",
+  "message.copycoords.command.msg_sent": "座標を %s に送信: %s",
+  "message.copycoords.command.msg_failed": "座標を %s に送信できませんでした: %s"
+}

@@ -2,10 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.3.2] - 2026-02-18
+## [1.3.2] - Not yet released
 
 ### Added
 - Cross-Platform Clipboard Support - clipboard functions now support linux and mac.
+- Language support for German, Spanish, French, Japanese, Portuguese, Russian and Simplified Chinese
 
 ## [1.3.1] - 2026-02-18
 

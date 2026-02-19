@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "Koordinaten Kopieren",
+  "title.copycoords.config": "CopyCoords Konfiguration",
+  "option.copycoords.copyToClipboard": "Koordinaten in die Zwischenablage kopieren",
+  "option.copycoords.copyToClipboard@Tooltip": "Wenn aktiviert, kopiert der Befehl /copycoords deine Koordinaten nach dem Absenden der Chatnachricht in die Systemzwischenablage.",
+  "option.copycoords.copyConvertedToClipboard": "Konvertierte Koordinaten in die Zwischenablage kopieren",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "Wenn aktiviert, kopiert der Befehl /convertcoords die konvertierten Koordinaten in die Systemzwischenablage.",
+  "message.copycoords.command.no_player": "Position kann nicht ausgelesen werden – kein Spieler geladen.",
+  "message.copycoords.command.coords_printed": "Deine aktuellen Koordinaten sind: %s",
+  "message.copycoords.command.copied": "Koordinaten in die Zwischenablage kopiert.",
+  "message.copycoords.command.copy_failed": "Fehler beim Kopieren der Koordinaten in die Zwischenablage: %s",
+  "message.copycoords.keybind.copied": "Koordinaten in die Zwischenablage kopiert: %s",
+  "message.copycoords.keybind.failed": "Fehler beim Kopieren der Koordinaten in die Zwischenablage: %s",
+  "message.copycoords.command.converted": "Konvertierte Koordinaten: %s",
+  "message.copycoords.command.unknown_goal": "Unbekannte Zieldimension: %s (verwende overworld oder nether)",
+  "message.copycoords.command.unsupported_dimension": "Koordinaten können in dieser Dimension nicht konvertiert werden (nur Oberwelt und Nether werden unterstützt).",
+  "message.copycoords.command.msg_sent": "Koordinaten an %s gesendet: %s",
+  "message.copycoords.command.msg_failed": "Fehler beim Senden der Koordinaten an %s: %s"
+}

@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "复制坐标",
+  "title.copycoords.config": "CopyCoords 配置",
+  "option.copycoords.copyToClipboard": "将坐标复制到剪贴板",
+  "option.copycoords.copyToClipboard@Tooltip": "如果启用，/copycoords 命令将在发送聊天消息后将你的坐标复制到系统剪贴板。",
+  "option.copycoords.copyConvertedToClipboard": "将转换的坐标复制到剪贴板",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "如果启用，/convertcoords 命令将把转换后的坐标复制到系统剪贴板。",
+  "message.copycoords.command.no_player": "无法读取位置 - 没有加载玩家。",
+  "message.copycoords.command.coords_printed": "你的当前坐标为: %s",
+  "message.copycoords.command.copied": "坐标已复制到剪贴板。",
+  "message.copycoords.command.copy_failed": "将坐标复制到剪贴板失败: %s",
+  "message.copycoords.keybind.copied": "坐标已复制到剪贴板: %s",
+  "message.copycoords.keybind.failed": "将坐标复制到剪贴板失败: %s",
+  "message.copycoords.command.converted": "转换的坐标: %s",
+  "message.copycoords.command.unknown_goal": "未知的目标维度: %s (使用 overworld 或 nether)",
+  "message.copycoords.command.unsupported_dimension": "无法在此维度中转换坐标 (仅支持主世界和下界)。",
+  "message.copycoords.command.msg_sent": "坐标已发送给 %s: %s",
+  "message.copycoords.command.msg_failed": "向 %s 发送坐标失败: %s"
+}

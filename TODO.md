@@ -1,7 +1,7 @@
 ## High Priority
 - [x] Cross-platform clipboard support - Currently only works on Windows (clip.exe). Linux/Mac users can't use clipboard features.
 
-- [ ] Additional language translations - Only English exists. Adding more languages would help international players.
+- [x] Additional language translations - Only English exists. Adding more languages would help international players.
 
 ## Medium Priority
 - [ ] Dimension indicator in output - When copying coords, it doesn't show which dimension you're currently in (useful when sharing).

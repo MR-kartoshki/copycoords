@@ -5,6 +5,8 @@
   "title.copycoords.config": "CopyCoords Configuration",
   "option.copycoords.copyToClipboard": "Copy coordinates to clipboard",
   "option.copycoords.copyToClipboard@Tooltip": "Whether /copycoords copies your coordinates to the system clipboard after sending the chat message.",
+  "option.copycoords.copyConvertedToClipboard": "Copy converted coordinates to clipboard",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "Whether /convertcoords copies your converted coordinates to the system clipboard.",
   "message.copycoords.command.no_player": "Cannot read position – no player loaded.",
   "message.copycoords.command.coords_printed": "Your current coordinates are: %s",
   "message.copycoords.command.copied": "Copied coordinates to clipboard.",

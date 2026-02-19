@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "Скопировать Координаты",
+  "title.copycoords.config": "Конфигурация CopyCoords",
+  "option.copycoords.copyToClipboard": "Копировать координаты в буфер обмена",
+  "option.copycoords.copyToClipboard@Tooltip": "Если включено, команда /copycoords скопирует ваши координаты в буфер обмена системы после отправки сообщения чата.",
+  "option.copycoords.copyConvertedToClipboard": "Копировать преобразованные координаты в буфер обмена",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "Если включено, команда /convertcoords скопирует преобразованные координаты в буфер обмена системы.",
+  "message.copycoords.command.no_player": "Не удается прочитать позицию - игрок не загружен.",
+  "message.copycoords.command.coords_printed": "Ваши текущие координаты: %s",
+  "message.copycoords.command.copied": "Координаты скопированы в буфер обмена.",
+  "message.copycoords.command.copy_failed": "Ошибка при копировании координат в буфер обмена: %s",
+  "message.copycoords.keybind.copied": "Координаты скопированы в буфер обмена: %s",
+  "message.copycoords.keybind.failed": "Ошибка при копировании координат в буфер обмена: %s",
+  "message.copycoords.command.converted": "Преобразованные координаты: %s",
+  "message.copycoords.command.unknown_goal": "Неизвестное целевое измерение: %s (используйте overworld или nether)",
+  "message.copycoords.command.unsupported_dimension": "Не удается преобразовать координаты в этом измерении (поддерживаются только Overworld и Nether).",
+  "message.copycoords.command.msg_sent": "Координаты отправлены %s: %s",
+  "message.copycoords.command.msg_failed": "Ошибка при отправке координат %s: %s"
+}

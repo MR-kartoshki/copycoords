@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "Copier les Coordonnées",
+  "title.copycoords.config": "Configuration de CopyCoords",
+  "option.copycoords.copyToClipboard": "Copier les coordonnées dans le presse-papiers",
+  "option.copycoords.copyToClipboard@Tooltip": "Si activé, la commande /copycoords copiera vos coordonnées dans le presse-papiers système après l'envoi du message de chat.",
+  "option.copycoords.copyConvertedToClipboard": "Copier les coordonnées converties dans le presse-papiers",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "Si activé, la commande /convertcoords copiera les coordonnées converties dans le presse-papiers système.",
+  "message.copycoords.command.no_player": "Impossible de lire la position – aucun joueur chargé.",
+  "message.copycoords.command.coords_printed": "Vos coordonnées actuelles sont : %s",
+  "message.copycoords.command.copied": "Coordonnées copiées dans le presse-papiers.",
+  "message.copycoords.command.copy_failed": "Échec de la copie des coordonnées dans le presse-papiers : %s",
+  "message.copycoords.keybind.copied": "Coordonnées copiées dans le presse-papiers : %s",
+  "message.copycoords.keybind.failed": "Échec de la copie des coordonnées dans le presse-papiers : %s",
+  "message.copycoords.command.converted": "Coordonnées converties : %s",
+  "message.copycoords.command.unknown_goal": "Dimension cible inconnue : %s (utilisez overworld ou nether)",
+  "message.copycoords.command.unsupported_dimension": "Impossible de convertir les coordonnées dans cette dimension (seul l'Overworld et le Nether sont pris en charge).",
+  "message.copycoords.command.msg_sent": "Coordonnées envoyées à %s : %s",
+  "message.copycoords.command.msg_failed": "Échec de l'envoi des coordonnées à %s : %s"
+}

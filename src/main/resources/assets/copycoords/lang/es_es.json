@@ -1,0 +1,21 @@
+{
+  "key.categories.copycoords": "CopyCoords",
+  "key.category.copycoords.copycoords": "CopyCoords",
+  "key.copycoords.copy": "Copiar Coordenadas",
+  "title.copycoords.config": "Configuración de CopyCoords",
+  "option.copycoords.copyToClipboard": "Copiar coordenadas al portapapeles",
+  "option.copycoords.copyToClipboard@Tooltip": "Si está habilitado, el comando /copycoords copiará tus coordenadas al portapapeles del sistema después de enviar el mensaje de chat.",
+  "option.copycoords.copyConvertedToClipboard": "Copiar coordenadas convertidas al portapapeles",
+  "option.copycoords.copyConvertedToClipboard@Tooltip": "Si está habilitado, el comando /convertcoords copiará las coordenadas convertidas al portapapeles del sistema.",
+  "message.copycoords.command.no_player": "No se puede leer la posición – no hay jugador cargado.",
+  "message.copycoords.command.coords_printed": "Tus coordenadas actuales son: %s",
+  "message.copycoords.command.copied": "Coordenadas copiadas al portapapeles.",
+  "message.copycoords.command.copy_failed": "Error al copiar coordenadas al portapapeles: %s",
+  "message.copycoords.keybind.copied": "Coordenadas copiadas al portapapeles: %s",
+  "message.copycoords.keybind.failed": "Error al copiar coordenadas al portapapeles: %s",
+  "message.copycoords.command.converted": "Coordenadas convertidas: %s",
+  "message.copycoords.command.unknown_goal": "Dimensión objetivo desconocida: %s (usa overworld o nether)",
+  "message.copycoords.command.unsupported_dimension": "No se pueden convertir coordenadas en esta dimensión (solo el Mundo Principal y el Inframundo son compatibles).",
+  "message.copycoords.command.msg_sent": "Coordenadas enviadas a %s: %s",
+  "message.copycoords.command.msg_failed": "Error al enviar coordenadas a %s: %s"
+}
