@@ -8,7 +8,7 @@
 
 - [x] Configurable coordinate format - No way to customize output (e.g., [100, 64, 200] vs X:100 Y:64 Z:200 vs current 100 64 200).
 
-- [ ] Coordinate bookmarks/history - No way to save favorite locations or view recently copied coordinates.
+- [x] Coordinate bookmarks/history - No way to save favorite locations or view recently copied coordinates.
 
 - [ ] Distance calculator - Can't calculate distance between two coordinate sets or get direction/bearing.
 

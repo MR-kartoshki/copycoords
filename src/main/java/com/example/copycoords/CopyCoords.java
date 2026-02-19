@@ -3,6 +3,7 @@ package com.example.copycoords;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -13,18 +14,31 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.List;
 
 // Main mod class that initializes the mod and registers the /copycoords command
 public class CopyCoords implements ClientModInitializer {
     public static CopyCoordsConfig config;
+    public static CopyCoordsDataStore dataStore;
+
+    private static final String OVERWORLD_ID = Level.OVERWORLD.toString();
+    private static final String NETHER_ID = Level.NETHER.toString();
+    private static final String END_ID = Level.END.toString();
 
     // Initialize the mod client-side by loading config and registering commands/keybinds
     @Override
+    @SuppressWarnings("null")
     public void onInitializeClient() {
         config = CopyCoordsConfig.load();
+        dataStore = CopyCoordsDataStore.load();
         CopyCoordsBind.register();
         // Register the /copycoords and /convertcoords commands with Brigadier
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -46,6 +60,13 @@ public class CopyCoords implements ClientModInitializer {
                 String remaining = sb.getRemaining().toLowerCase();
                 if (remaining.isEmpty() || remaining.equals("~")) {
                     sb.suggest("~ ~ ~", Component.literal("Use current position"));
+                }
+                return sb.buildFuture();
+            };
+
+            SuggestionProvider<FabricClientCommandSource> bookmarkSuggestions = (ctx, sb) -> {
+                for (String name : dataStore.getBookmarkNames()) {
+                    sb.suggest(name);
                 }
                 return sb.buildFuture();
             };
@@ -87,6 +108,36 @@ public class CopyCoords implements ClientModInitializer {
             playerArg.then(msgGoalArg);
             msg.then(playerArg);
             dispatcher.register(msg);
+
+                // Register /coordshistory
+                LiteralArgumentBuilder<FabricClientCommandSource> history = ClientCommandManager.literal("coordshistory");
+                history.executes(context -> executeHistoryList());
+                history.then(ClientCommandManager.literal("list")
+                    .executes(context -> executeHistoryList()));
+                history.then(ClientCommandManager.literal("clear")
+                    .executes(context -> executeHistoryClear()));
+                history.then(ClientCommandManager.literal("copy")
+                    .then(ClientCommandManager.argument("index", IntegerArgumentType.integer(1))
+                        .executes(context -> executeHistoryCopy(IntegerArgumentType.getInteger(context, "index")))));
+                dispatcher.register(history);
+
+                // Register /coordbookmark
+                LiteralArgumentBuilder<FabricClientCommandSource> bookmark = ClientCommandManager.literal("coordbookmark");
+                bookmark.executes(context -> executeBookmarkList());
+                bookmark.then(ClientCommandManager.literal("list")
+                    .executes(context -> executeBookmarkList()));
+                bookmark.then(ClientCommandManager.literal("add")
+                    .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                        .executes(context -> executeBookmarkAdd(StringArgumentType.getString(context, "name")))));
+                bookmark.then(ClientCommandManager.literal("copy")
+                    .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                        .suggests(bookmarkSuggestions)
+                        .executes(context -> executeBookmarkCopy(StringArgumentType.getString(context, "name")))));
+                bookmark.then(ClientCommandManager.literal("remove")
+                    .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                        .suggests(bookmarkSuggestions)
+                        .executes(context -> executeBookmarkRemove(StringArgumentType.getString(context, "name")))));
+                dispatcher.register(bookmark);
         });
     }
 
@@ -103,14 +154,15 @@ public class CopyCoords implements ClientModInitializer {
         int x = player.blockPosition().getX();
         int y = player.blockPosition().getY();
         int z = player.blockPosition().getZ();
-        String coordString = formatCoordinates(x, y, z, player);
+        String dimensionId = getDimensionId(player);
+        String coordString = formatCoordinates(x, y, z, dimensionId);
 
         // Print coordinates to chat
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.coords_printed", coordString));
 
         // Copy to clipboard if enabled in config
         if (config.copyToClipboard) {
-            copyToClipboardWithFeedback(coordString);
+            copyToClipboardWithFeedback(coordString, x, y, z, dimensionId);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -134,11 +186,12 @@ public class CopyCoords implements ClientModInitializer {
             return 0;
         }
 
-        String coordString = converted[0] + " " + converted[1] + " " + converted[2];
+        String dimensionId = getDimensionIdForGoal(goal);
+        String coordString = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", coordString));
 
         if (config.copyConvertedToClipboard) {
-            copyToClipboardWithFeedback(coordString);
+            copyToClipboardWithFeedback(coordString, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -181,11 +234,12 @@ public class CopyCoords implements ClientModInitializer {
             return 0;
         }
 
-        String out = converted[0] + " " + converted[1] + " " + converted[2];
+        String dimensionId = getDimensionIdForGoal(goal);
+        String out = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
         Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.converted", out));
 
         if (config.copyConvertedToClipboard) {
-            copyToClipboardWithFeedback(out);
+            copyToClipboardWithFeedback(out, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -300,34 +354,53 @@ public class CopyCoords implements ClientModInitializer {
         }
     }
 
-    // Helper method to get dimension name from player's current dimension
-    private static String getDimensionName(Player player) {
-        if (player.level().dimension().equals(Level.OVERWORLD)) {
-            return "Overworld";
-        } else if (player.level().dimension().equals(Level.NETHER)) {
-            return "Nether";
-        } else if (player.level().dimension().equals(Level.END)) {
-            return "End";
-        }
-        // Fallback for unknown dimensions
+    static String getDimensionId(Player player) {
         return player.level().dimension().toString();
     }
 
+    static String getDimensionIdForGoal(String goal) {
+        if (goal.equals("nether")) {
+            return NETHER_ID;
+        }
+        return OVERWORLD_ID;
+    }
+
+    static String getDimensionNameFromId(String dimensionId) {
+        if (dimensionId == null) {
+            return "Unknown";
+        }
+        if (dimensionId.equals(OVERWORLD_ID)) {
+            return "Overworld";
+        } else if (dimensionId.equals(NETHER_ID)) {
+            return "Nether";
+        } else if (dimensionId.equals(END_ID)) {
+            return "End";
+        }
+        return dimensionId;
+    }
+
     // Helper method to format coordinates with optional dimension
-    private static String formatCoordinates(int x, int y, int z, Player player) {
+    static String formatCoordinates(int x, int y, int z, String dimensionId) {
         CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
         String coordString = format.format(x, y, z);
         if (CopyCoords.config.showDimensionInCoordinates) {
-            coordString += " (" + getDimensionName(player) + ")";
+            coordString += " (" + getDimensionNameFromId(dimensionId) + ")";
         }
         return coordString;
     }
 
-    private void copyToClipboardWithFeedback(String text) {
+    static void addHistoryEntry(int x, int y, int z, String dimensionId) {
+        if (dataStore != null) {
+            dataStore.addHistoryEntry(x, y, z, dimensionId);
+        }
+    }
+
+    private void copyToClipboardWithFeedback(String text, int x, int y, int z, String dimensionId) {
         try {
             // Copy to clipboard using cross-platform utility
             ClipboardUtils.copyToClipboard(text);
             Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
+            addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             String errorMsg = e.getMessage();
             if (errorMsg == null || errorMsg.isEmpty()) {
@@ -335,5 +408,204 @@ public class CopyCoords implements ClientModInitializer {
             }
             Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
         }
+    }
+
+    private int executeHistoryList() {
+        List<CopyCoordsDataStore.HistoryEntry> history = dataStore.getHistory();
+        if (history.isEmpty()) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("History is empty."));
+            return 0;
+        }
+
+        Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Recent coordinates (click to copy):"));
+
+        for (int i = 0; i < history.size(); i++) {
+            CopyCoordsDataStore.HistoryEntry entry = history.get(i);
+            String coordString = formatCoordinates(entry.x, entry.y, entry.z, entry.dimensionId);
+            int index = i + 1;
+            final int clickIndex = index;
+                        ClickEvent clickEvent = buildClickEvent("/coordshistory copy " + clickIndex);
+                        HoverEvent hoverEvent = buildHoverEvent(Component.literal("Copy to clipboard"));
+                        Component line = Component.literal(index + ") " + coordString)
+                            .withStyle(style -> applyEvents(style, clickEvent, hoverEvent));
+            Minecraft.getInstance().gui.getChat().addMessage(line);
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeHistoryCopy(int index) {
+        List<CopyCoordsDataStore.HistoryEntry> history = dataStore.getHistory();
+        if (index < 1 || index > history.size()) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Invalid history index: " + index));
+            return 0;
+        }
+
+        CopyCoordsDataStore.HistoryEntry entry = history.get(index - 1);
+        String coordString = formatCoordinates(entry.x, entry.y, entry.z, entry.dimensionId);
+        try {
+            ClipboardUtils.copyToClipboard(coordString);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Copied history entry " + index + " to clipboard."));
+            addHistoryEntry(entry.x, entry.y, entry.z, entry.dimensionId);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
+            return 0;
+        }
+    }
+
+    private int executeHistoryClear() {
+        dataStore.clearHistory();
+        Minecraft.getInstance().gui.getChat().addMessage(Component.literal("History cleared."));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeBookmarkAdd(String name) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.no_player"));
+            return 0;
+        }
+
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark name cannot be empty."));
+            return 0;
+        }
+
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+        String dimensionId = getDimensionId(player);
+
+        if (!dataStore.addBookmark(trimmed, x, y, z, dimensionId)) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark already exists: " + trimmed));
+            return 0;
+        }
+
+        Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark added: " + trimmed));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeBookmarkList() {
+        List<CopyCoordsDataStore.BookmarkEntry> bookmarks = dataStore.getBookmarks();
+        if (bookmarks.isEmpty()) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("No bookmarks yet."));
+            return 0;
+        }
+
+        Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmarks (click to copy):"));
+        for (CopyCoordsDataStore.BookmarkEntry entry : bookmarks) {
+            String coordString = formatCoordinates(entry.x, entry.y, entry.z, entry.dimensionId);
+            String command = "/coordbookmark copy " + quoteArgument(entry.name);
+                        ClickEvent clickEvent = buildClickEvent(command);
+                        HoverEvent hoverEvent = buildHoverEvent(Component.literal("Copy to clipboard"));
+                        Component line = Component.literal(entry.name + " - " + coordString)
+                            .withStyle(style -> applyEvents(style, clickEvent, hoverEvent));
+            Minecraft.getInstance().gui.getChat().addMessage(line);
+        }
+
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int executeBookmarkCopy(String name) {
+        CopyCoordsDataStore.BookmarkEntry entry = dataStore.getBookmark(name);
+        if (entry == null) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark not found: " + name));
+            return 0;
+        }
+
+        String coordString = formatCoordinates(entry.x, entry.y, entry.z, entry.dimensionId);
+        try {
+            ClipboardUtils.copyToClipboard(coordString);
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Copied bookmark '" + entry.name + "' to clipboard."));
+            addHistoryEntry(entry.x, entry.y, entry.z, entry.dimensionId);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copy_failed", errorMsg));
+            return 0;
+        }
+    }
+
+    private int executeBookmarkRemove(String name) {
+        if (dataStore.removeBookmark(name)) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark removed: " + name));
+            return Command.SINGLE_SUCCESS;
+        }
+
+        Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark not found: " + name));
+        return 0;
+    }
+
+    private String quoteArgument(String value) {
+        String escaped = value.replace("\"", "\\\"");
+        if (escaped.contains(" ")) {
+            return "\"" + escaped + "\"";
+        }
+        return escaped;
+    }
+
+    private static net.minecraft.network.chat.Style applyEvents(net.minecraft.network.chat.Style style,
+                                                               ClickEvent clickEvent,
+                                                               HoverEvent hoverEvent) {
+        if (clickEvent != null) {
+            style = style.withClickEvent(clickEvent);
+        }
+        if (hoverEvent != null) {
+            style = style.withHoverEvent(hoverEvent);
+        }
+        return style;
+    }
+
+    private static ClickEvent buildClickEvent(String command) {
+        try {
+            Method runCommand = ClickEvent.class.getDeclaredMethod("runCommand", String.class);
+            return (ClickEvent) runCommand.invoke(null, command);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Class<?> runCommandClass = Class.forName("net.minecraft.network.chat.ClickEvent$RunCommand");
+            return (ClickEvent) runCommandClass.getConstructor(String.class).newInstance(command);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Constructor<ClickEvent> ctor = ClickEvent.class.getConstructor(ClickEvent.Action.class, String.class);
+            return ctor.newInstance(ClickEvent.Action.RUN_COMMAND, command);
+        } catch (Exception ignored) {
+        }
+
+        return null;
+    }
+
+    private static HoverEvent buildHoverEvent(Component text) {
+        try {
+            Method showText = HoverEvent.class.getDeclaredMethod("showText", Component.class);
+            return (HoverEvent) showText.invoke(null, text);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Class<?> showTextClass = Class.forName("net.minecraft.network.chat.HoverEvent$ShowText");
+            return (HoverEvent) showTextClass.getConstructor(Component.class).newInstance(text);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Constructor<HoverEvent> ctor = HoverEvent.class.getConstructor(HoverEvent.Action.class, Component.class);
+            return ctor.newInstance(HoverEvent.Action.SHOW_TEXT, text);
+        } catch (Exception ignored) {
+        }
+
+        return null;
     }
 }

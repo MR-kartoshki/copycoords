@@ -58,6 +58,7 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .build());
 
             // Add selector for coordinate format
+            @SuppressWarnings("null")
             CoordinateFormat currentFormat = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
             general.addEntry(entryBuilder.startSelector(
                             Component.literal("Coordinate format"),

@@ -6,8 +6,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -19,6 +17,7 @@ public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
 
     // Register the keybind and set up the tick event listener
+    @SuppressWarnings("null")
     public static void register() {
         // Create a custom keybind category for this mod
         Object copyCategory = createKeyCategory("copycoords:copycoords");
@@ -36,29 +35,28 @@ public class CopyCoordsBind {
     }
 
     // Execute coordinate copying when keybind is pressed
+    @SuppressWarnings("null")
     private static void executeKeybindCopy(Minecraft minecraft) {
         // Ensure player exists before accessing position
-        if (minecraft.player == null) {
+        net.minecraft.world.entity.player.Player player = minecraft.player;
+        if (player == null) {
             return;
         }
 
         // Get player's current block coordinates
-        int x = minecraft.player.blockPosition().getX();
-        int y = minecraft.player.blockPosition().getY();
-        int z = minecraft.player.blockPosition().getZ();
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
         
-        // Format coordinates according to config
-        CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
-        String coordString = format.format(x, y, z);
-        if (CopyCoords.config.showDimensionInCoordinates) {
-            coordString += " (" + getDimensionName(minecraft.player) + ")";
-        }
+        String dimensionId = CopyCoords.getDimensionId(player);
+        String coordString = CopyCoords.formatCoordinates(x, y, z, dimensionId);
 
         try {
             // Copy coordinates to clipboard using cross-platform utility
             ClipboardUtils.copyToClipboard(coordString);
             // Notify player of successful copy
             minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.copied", coordString));
+            CopyCoords.addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             // Handle clipboard copy errors
             String errorMsg = e.getMessage();
@@ -127,16 +125,4 @@ public class CopyCoordsBind {
         throw new IllegalStateException("No compatible KeyMapping constructor found.");
     }
 
-    // Helper method to get dimension name from player's current dimension
-    private static String getDimensionName(Player player) {
-        if (player.level().dimension().equals(Level.OVERWORLD)) {
-            return "Overworld";
-        } else if (player.level().dimension().equals(Level.NETHER)) {
-            return "Nether";
-        } else if (player.level().dimension().equals(Level.END)) {
-            return "End";
-        }
-        // Fallback for unknown dimensions
-        return player.level().dimension().toString();
-    }
 }
