@@ -45,7 +45,81 @@ jobs:
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true')
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: ./gradlew publishAllToModrinth --no-daemon
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PROJECT_ID="GzPkXb2a"
+          MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
+          CHANGELOG="$(cat build/current-changelog.md)"
+
+          # Read optional dependency config from repo root (deps.json)
+          # Expected format:
+          # [
+          #   {"project_id":"P7dR8mSH","dependency_type":"required"},
+          #   {"project_id":"AANobbMI","dependency_type":"optional"}
+          # ]
+          DEPS_JSON='[]'
+          if [[ -f deps.json ]]; then
+            DEPS_JSON="$(jq -c '
+              if type != "array" then
+                error("deps.json must be a JSON array")
+              else
+                map(
+                  if (has("project_id") and has("dependency_type")) then .
+                  else error("Each dependency must include project_id and dependency_type") end
+                  | if (["required","optional","incompatible","embedded"] | index(.dependency_type)) != null then .
+                    else error("dependency_type must be one of: required, optional, incompatible, embedded") end
+                )
+              end
+            ' deps.json)"
+          else
+            echo "::warning::deps.json not found in repo root; uploading with empty dependencies array."
+          fi
+
+          shopt -s nullglob
+          JARS=(versions/*/build/libs/*.jar)
+          if [[ ${#JARS[@]} -eq 0 ]]; then
+            echo "No JAR files found under versions/*/build/libs"
+            exit 1
+          fi
+
+          for JAR in "${JARS[@]}"; do
+            # Skip non-primary artifacts
+            if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
+              continue
+            fi
+
+            MC_VERSION="$(echo "$JAR" | sed -E 's#^versions/([^/]+)/.*#\1#')"
+            VERSION_NUMBER="${MOD_VERSION}+${MC_VERSION}"
+            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
+
+            # Keep existing payload fields and inject validated dependencies.
+            PAYLOAD="$(jq -cn \
+              --arg project_id "$PROJECT_ID" \
+              --arg name "$VERSION_NAME" \
+              --arg version_number "$VERSION_NUMBER" \
+              --arg changelog "$CHANGELOG" \
+              --arg mc "$MC_VERSION" \
+              --argjson deps "$DEPS_JSON" \
+              '{
+                project_id: $project_id,
+                name: $name,
+                version_number: $version_number,
+                changelog: $changelog,
+                game_versions: [$mc],
+                loaders: ["fabric"],
+                featured: false,
+                version_type: "release",
+                dependencies: $deps
+              }')"
+
+            echo "Uploading ${JAR} for MC ${MC_VERSION}"
+            curl -fsS -X POST "https://api.modrinth.com/v2/version" \
+              -H "Authorization: ${MODRINTH_TOKEN}" \
+              -F "data=${PAYLOAD}" \
+              -F "file=@${JAR}"
+          done
 
       - name: GitHub Release (attach jar)
         if: startsWith(github.ref, 'refs/tags/')
