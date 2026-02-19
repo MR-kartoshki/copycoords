@@ -2,10 +2,10 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.4] - 2026-02-19
+## [1.4.0] - 2026-02-19
 
 ### Added
-- **Cross-Platform Clipboard Support** — clipboard functions now work on Windows, macOS, and Linux
+ - **Cross-Platform Clipboard Support** — clipboard functions now work on Windows, macOS, and Linux
   - Windows: Uses `clip.exe` (built-in)
   - macOS: Uses `pbcopy` (built-in)
   - Linux: Uses `xclip` or `xsel` (install via package manager)
@@ -28,6 +28,10 @@ All notable changes to CopyCoords will be documented in this file.
   - Shows horizontal, vertical, and total 3D distance
   - Provides bearing in degrees and cardinal direction (16-point compass)
   - Displays Manhattan distance for reference
+
+### Fixed
+- **Client startup keybind crash on some 1.21.11 environments**
+  - Expanded `KeyMapping` constructor compatibility handling in keybind registration
 
 ## [1.3.1] - 2026-02-18
 

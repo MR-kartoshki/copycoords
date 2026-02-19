@@ -145,13 +145,13 @@ public class CopyCoords implements ClientModInitializer {
                 // Register /distcalc for calculating distance between two coordinate sets
                 LiteralArgumentBuilder<FabricClientCommandSource> distcalc = ClientCommandManager.literal("distcalc");
                 
-                RequiredArgumentBuilder<FabricClientCommandSource, String> x1Arg =
-                    ClientCommandManager.argument("x1", StringArgumentType.word())
-                        .then(ClientCommandManager.argument("y1", StringArgumentType.word())
-                            .then(ClientCommandManager.argument("z1", StringArgumentType.word())
-                                .then(ClientCommandManager.argument("x2", StringArgumentType.word())
-                                    .then(ClientCommandManager.argument("y2", StringArgumentType.word())
-                                        .then(ClientCommandManager.argument("z2", StringArgumentType.word())
+                RequiredArgumentBuilder<FabricClientCommandSource, Integer> x1Arg =
+                    ClientCommandManager.argument("x1", IntegerArgumentType.integer())
+                        .then(ClientCommandManager.argument("y1", IntegerArgumentType.integer())
+                            .then(ClientCommandManager.argument("z1", IntegerArgumentType.integer())
+                                .then(ClientCommandManager.argument("x2", IntegerArgumentType.integer())
+                                    .then(ClientCommandManager.argument("y2", IntegerArgumentType.integer())
+                                        .then(ClientCommandManager.argument("z2", IntegerArgumentType.integer())
                                             .executes(context -> executeDistanceCalc(context)))))));
                 
                 distcalc.then(x1Arg);
@@ -166,17 +166,6 @@ public class CopyCoords implements ClientModInitializer {
 
                 distcalc.then(ClientCommandManager.literal("bookmarks")
                     .then(bm1Arg));
-
-                // Alias for common typo
-                RequiredArgumentBuilder<FabricClientCommandSource, String> typoBm1Arg =
-                    ClientCommandManager.argument("bookmark1", StringArgumentType.string())
-                        .suggests(bookmarkSuggestions)
-                        .then(ClientCommandManager.argument("bookmark2", StringArgumentType.string())
-                            .suggests(bookmarkSuggestions)
-                            .executes(context -> executeDistanceCalcBookmarks(context)));
-
-                distcalc.then(ClientCommandManager.literal("booksmarks")
-                    .then(typoBm1Arg));
                 
                 dispatcher.register(distcalc);
         });
@@ -658,12 +647,12 @@ public class CopyCoords implements ClientModInitializer {
     // Execute /distcalc <x1> <y1> <z1> <x2> <y2> <z2> to calculate distance between two coordinate sets
     private int executeDistanceCalc(CommandContext<FabricClientCommandSource> context) {
         try {
-            int x1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "x1"), Minecraft.getInstance().player, "x");
-            int y1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "y1"), Minecraft.getInstance().player, "y");
-            int z1 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "z1"), Minecraft.getInstance().player, "z");
-            int x2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "x2"), Minecraft.getInstance().player, "x");
-            int y2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "y2"), Minecraft.getInstance().player, "y");
-            int z2 = parseCoordOrPlayerCoord(StringArgumentType.getString(context, "z2"), Minecraft.getInstance().player, "z");
+            int x1 = IntegerArgumentType.getInteger(context, "x1");
+            int y1 = IntegerArgumentType.getInteger(context, "y1");
+            int z1 = IntegerArgumentType.getInteger(context, "z1");
+            int x2 = IntegerArgumentType.getInteger(context, "x2");
+            int y2 = IntegerArgumentType.getInteger(context, "y2");
+            int z2 = IntegerArgumentType.getInteger(context, "z2");
 
             DistanceCalculator.DistanceResult result = DistanceCalculator.calculate(x1, y1, z1, x2, y2, z2);
             

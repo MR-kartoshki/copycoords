@@ -91,9 +91,11 @@ public class CopyCoordsBind {
     private static KeyMapping createKeyMapping(String translationKey, int keyCode, Object category) {
         String categoryKey = "key.categories.copycoords";
 
-        for (Constructor<?> ctor : KeyMapping.class.getConstructors()) {
+        for (Constructor<?> ctor : KeyMapping.class.getDeclaredConstructors()) {
             Class<?>[] params = ctor.getParameterTypes();
             try {
+                ctor.setAccessible(true);
+
                 if (params.length == 3
                     && params[0] == String.class
                     && params[1] == int.class
@@ -115,6 +117,19 @@ public class CopyCoordsBind {
                     }
                     if (params[3].getName().endsWith("KeyMapping$Category")) {
                         return (KeyMapping) ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, category);
+                    }
+                }
+
+                // Newer variants may take InputConstants$Key directly
+                if (params.length == 3
+                    && params[0] == String.class
+                    && params[1].getName().equals("com.mojang.blaze3d.platform.InputConstants$Key")) {
+                    Object key = InputConstants.Type.KEYSYM.getOrCreate(keyCode);
+                    if (params[2] == String.class) {
+                        return (KeyMapping) ctor.newInstance(translationKey, key, categoryKey);
+                    }
+                    if (params[2].getName().endsWith("KeyMapping$Category")) {
+                        return (KeyMapping) ctor.newInstance(translationKey, key, category);
                     }
                 }
             } catch (Exception ignored) {

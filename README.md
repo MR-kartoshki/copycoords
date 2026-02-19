@@ -43,6 +43,7 @@ The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
 - `/msgcoords [player] [dimension]` - Send converted coordinates to a player
 - `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` - Calculate distance between two coordinate sets
 - `/distcalc bookmarks [bookmark1] [bookmark2]` - Calculate distance between saved bookmarks
+  - If bookmark names contain spaces, wrap them in quotes (e.g., `/distcalc bookmarks "Base One" "Base Two"`)
 - **C key** - Quick copy without opening chat
 
 ## Installation
