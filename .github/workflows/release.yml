@@ -24,37 +24,10 @@ permissions:
   contents: write
 
 jobs:
-  discover-versions:
-    runs-on: ubuntu-latest
-    outputs:
-      mc_versions: ${{ steps.discover.outputs.mc_versions }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Discover Minecraft versions
-        id: discover
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mapfile -t MC_VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
-
-          if [[ ${#MC_VERSIONS[@]} -eq 0 ]]; then
-            echo "::error::No version folders found under versions/."
-            exit 1
-          fi
-
-          printf 'Discovered versions: %s\n' "${MC_VERSIONS[*]}"
-          echo "mc_versions=$(printf '%s\n' "${MC_VERSIONS[@]}" | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
 
   build-and-publish:
-    needs: discover-versions
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        mc_version: ${{ fromJson(needs.discover-versions.outputs.mc_versions) }}
 
     steps:
       - name: Checkout
@@ -74,11 +47,41 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Build matrix version
-        run: ./gradlew ":${{ matrix.mc_version }}:build" --no-daemon
+      - name: Build all versions
+        run: ./gradlew buildAllVersions --no-daemon
 
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
+
+      - name: Discover built versions
+        id: discover_built
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSIONS=()
+          if [[ -f settings.gradle ]]; then
+            VERSIONS_LINE=$(grep -oP "versions\s*\([^)]*\)" settings.gradle || true)
+            if [[ -n "${VERSIONS_LINE}" ]]; then
+              while IFS= read -r v; do
+                v=${v#\'}; v=${v%\'}; v=${v#\"}; v=${v%\"}
+                VERSIONS+=("$v")
+              done < <(echo "${VERSIONS_LINE}" | grep -oP "'[^']+'|\"[^\"]+\"")
+            fi
+          fi
+
+          if [[ ${#VERSIONS[@]} -eq 0 && -d versions ]]; then
+            mapfile -t VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
+          fi
+
+          if [[ ${#VERSIONS[@]} -eq 0 ]]; then
+            echo "::warning::No version folders found under versions/; creating fallback versions/1.21"
+            mkdir -p versions/1.21
+            VERSIONS=("1.21")
+          fi
+
+          echo "discovered_versions=${VERSIONS[*]}" >> "$GITHUB_OUTPUT"
+          printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
 
       - name: Publish to Modrinth
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != 'true')
@@ -88,22 +91,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          PROJECT_ID="GzPkXb2a"
-          MC_VERSION="${{ matrix.mc_version }}"
-          MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
-          CHANGELOG="$(cat build/current-changelog.md)"
-
           if [[ -z "${MODRINTH_TOKEN:-}" ]]; then
             echo "::error::MODRINTH_TOKEN is not set"
             exit 1
           fi
 
-          # Read optional dependency config from repo root (deps.json)
-          # Expected format:
-          # [
-          #   {"project_id":"P7dR8mSH","dependency_type":"required"},
-          #   {"project_id":"AANobbMI","dependency_type":"optional"}
-          # ]
           DEPS_JSON='[]'
           if [[ -f deps.json ]]; then
             bash .github/scripts/validate-deps.sh deps.json
@@ -112,109 +104,97 @@ jobs:
             echo "::warning::deps.json not found in repo root; uploading with empty dependencies array."
           fi
 
-          shopt -s nullglob
-          JARS=("versions/${MC_VERSION}/build/libs"/*.jar)
-          if [[ ${#JARS[@]} -eq 0 ]]; then
-            echo "No JAR files found under versions/${MC_VERSION}/build/libs"
-            exit 1
-          fi
+          for MC_VERSION in ${discovered_versions}; do
+            echo "Publishing for MC version: ${MC_VERSION}"
 
-          PRIMARY_JAR=""
-          for JAR in "${JARS[@]}"; do
-            if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
+            JAR_DIR="versions/${MC_VERSION}/build/libs"
+            JARS=("${JAR_DIR}"/*.jar)
+            if [[ ${#JARS[@]} -eq 0 ]]; then
+              echo "No JAR files found under ${JAR_DIR}; skipping ${MC_VERSION}"
               continue
             fi
-            if [[ -n "$PRIMARY_JAR" ]]; then
-              echo "::error::Multiple primary JARs found for MC ${MC_VERSION}."
-              printf '%s\n' "$PRIMARY_JAR" "$JAR"
-              exit 1
+
+            PRIMARY_JAR=""
+            for JAR in "${JARS[@]}"; do
+              if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
+                continue
+              fi
+              if [[ -n "$PRIMARY_JAR" ]]; then
+                echo "::error::Multiple primary JARs found for MC ${MC_VERSION}."
+                printf '%s\n' "$PRIMARY_JAR" "$JAR"
+                exit 1
+              fi
+              PRIMARY_JAR="$JAR"
+            done
+
+            if [[ -z "$PRIMARY_JAR" ]]; then
+              echo "No primary JAR file found under ${JAR_DIR}; skipping ${MC_VERSION}"
+              continue
             fi
-            PRIMARY_JAR="$JAR"
-          done
 
-          if [[ -z "$PRIMARY_JAR" ]]; then
-            echo "No primary JAR file found under versions/${MC_VERSION}/build/libs"
-            exit 1
-          fi
+            PROJECT_ID="GzPkXb2a"
+            MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
+            CHANGELOG="$(cat build/current-changelog.md)"
+            VERSION_NUMBER="${MOD_VERSION}-${MC_VERSION}"
+            VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
+            GAME_VERSIONS_JSON="$(jq -cn --arg mc "$MC_VERSION" '[$mc]')"
+            FILE_PARTS_JSON='["file"]'
 
-          VERSION_NUMBER="${MOD_VERSION}-${MC_VERSION}"
-          VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
-          GAME_VERSIONS_JSON="$(jq -cn --arg mc "$MC_VERSION" '[$mc]')"
-          FILE_PARTS_JSON='["file"]'
+            PAYLOAD="$(jq -cn \
+              --arg project_id "$PROJECT_ID" \
+              --arg name "$VERSION_NAME" \
+              --arg version_number "$VERSION_NUMBER" \
+              --arg changelog "$CHANGELOG" \
+              --argjson game_versions "$GAME_VERSIONS_JSON" \
+              --argjson file_parts "$FILE_PARTS_JSON" \
+              --argjson deps "$DEPS_JSON" \
+              '{
+                project_id: $project_id,
+                name: $name,
+                version_number: $version_number,
+                changelog: $changelog,
+                game_versions: $game_versions,
+                loaders: ["fabric"],
+                featured: false,
+                version_type: "release",
+                file_parts: $file_parts,
+                dependencies: $deps
+              }')"
 
-          PAYLOAD="$(jq -cn \
-            --arg project_id "$PROJECT_ID" \
-            --arg name "$VERSION_NAME" \
-            --arg version_number "$VERSION_NUMBER" \
-            --arg changelog "$CHANGELOG" \
-            --argjson game_versions "$GAME_VERSIONS_JSON" \
-            --argjson file_parts "$FILE_PARTS_JSON" \
-            --argjson deps "$DEPS_JSON" \
-            '{
-              project_id: $project_id,
-              name: $name,
-              version_number: $version_number,
-              changelog: $changelog,
-              game_versions: $game_versions,
-              loaders: ["fabric"],
-              featured: false,
-              version_type: "release",
-              file_parts: $file_parts,
-              dependencies: $deps
-            }')"
+            LOADERS_JSON='["fabric"]'
+            LOADERS_ENC="$(printf '%s' "$LOADERS_JSON" | jq -sRr @uri)"
+            GAME_VERSIONS_ENC="$(jq -cn --arg mc "$MC_VERSION" '[ $mc ]' | jq -sRr @uri)"
+            CHECK_URL="https://api.modrinth.com/v2/project/${PROJECT_ID}/version?loaders=${LOADERS_ENC}&game_versions=${GAME_VERSIONS_ENC}&include_changelog=false"
 
-          LOADERS_JSON='["fabric"]'
-          LOADERS_ENC="$(printf '%s' "$LOADERS_JSON" | jq -sRr @uri)"
-          GAME_VERSIONS_ENC="$(jq -cn --arg mc "$MC_VERSION" '[ $mc ]' | jq -sRr @uri)"
-
-          CHECK_URL="https://api.modrinth.com/v2/project/${PROJECT_ID}/version?loaders=${LOADERS_ENC}&game_versions=${GAME_VERSIONS_ENC}&include_changelog=false"
-
-          CHECK_STATUS=""
-          for ATTEMPT in 1 2 3; do
             CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
               -H "Authorization: ${MODRINTH_TOKEN}" \
               "${CHECK_URL}")"
 
-            if [[ "$CHECK_STATUS" == "200" ]]; then
-              break
+            if [[ "$CHECK_STATUS" != "200" ]]; then
+              echo "::error::Failed to check existing Modrinth versions for ${MC_VERSION} (HTTP ${CHECK_STATUS})."
+              cat /tmp/modrinth-check.json || true
+              exit 1
             fi
 
-            if [[ "$CHECK_STATUS" == "429" || "$CHECK_STATUS" == "500" || "$CHECK_STATUS" == "502" || "$CHECK_STATUS" == "503" || "$CHECK_STATUS" == "504" ]]; then
-              if [[ "$ATTEMPT" -lt 3 ]]; then
-                echo "Transient Modrinth check failure (HTTP ${CHECK_STATUS}), retrying (${ATTEMPT}/3)..."
-                sleep $((ATTEMPT * 2))
-                continue
-              fi
+            if jq -e --arg vn "$VERSION_NUMBER" 'any(.[]; .version_number == $vn)' /tmp/modrinth-check.json > /dev/null; then
+              echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload."
+              continue
             fi
 
-            break
+            echo "Uploading ${PRIMARY_JAR} for game version ${MC_VERSION} as ${VERSION_NUMBER}"
+            UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
+              -H "Authorization: ${MODRINTH_TOKEN}" \
+              -F "data=${PAYLOAD};type=application/json" \
+              -F "file=@${PRIMARY_JAR}")"
+            if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
+              echo "::error::Modrinth upload failed for ${MC_VERSION} with HTTP ${UPLOAD_STATUS}."
+              cat /tmp/modrinth-upload.json || true
+              exit 1
+            fi
           done
-
-          if [[ "$CHECK_STATUS" != "200" ]]; then
-            echo "::error::Failed to check existing Modrinth versions (HTTP ${CHECK_STATUS})."
-            cat /tmp/modrinth-check.json || true
-            exit 1
-          fi
-
-          if jq -e --arg vn "$VERSION_NUMBER" 'any(.[]; .version_number == $vn)' /tmp/modrinth-check.json > /dev/null; then
-            echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload."
-            exit 0
-          fi
-
-          echo "Uploading ${PRIMARY_JAR} for game version ${MC_VERSION} as ${VERSION_NUMBER}"
-          UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
-            -H "Authorization: ${MODRINTH_TOKEN}" \
-            -F "data=${PAYLOAD};type=application/json" \
-            -F "file=@${PRIMARY_JAR}")"
-          if [[ "$UPLOAD_STATUS" != "200" && "$UPLOAD_STATUS" != "201" ]]; then
-            echo "::error::Modrinth upload failed with HTTP ${UPLOAD_STATUS}."
-            cat /tmp/modrinth-upload.json || true
-            exit 1
-          fi
 
   github-release:
     needs:
-      - discover-versions
       - build-and-publish
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
