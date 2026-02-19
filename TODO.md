@@ -20,3 +20,4 @@
 - [ ] Decimal precision option - Currently always rounds to integers
 - [ ] Copy to chat input - Paste coords into chat box instead of sending as message
 - [ ] Config GUI improvements - Add keybind customization, format templates, etc.
+- [ ] /cc command - /copycoords shortcut
