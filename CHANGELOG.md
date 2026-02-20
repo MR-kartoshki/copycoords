@@ -2,6 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.6.0] - 2026-02-20
+
+### Added
+- **Decimal precision option** — configurable number of decimal places for coordinate output (0 = integer only).
+
 ## [1.5.1] - 2026-02-20
 
 ### Fixed

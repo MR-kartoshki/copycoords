@@ -72,6 +72,15 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newFormat -> CopyCoords.config.coordinateFormat = newFormat.getId())
                     .build());
 
+            // Decimal precision field
+            general.addEntry(entryBuilder.startIntField(
+                            Component.literal("Decimal precision"),
+                            CopyCoords.config.decimalPrecision)
+                    .setDefaultValue(0)
+                    .setTooltip(Component.literal("How many decimal places to include in coordinate output (0 = integers only)."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.decimalPrecision = newValue)
+                    .build());
+
             // Save config to file when changes are applied
             builder.setSavingRunnable(() -> CopyCoords.config.save());
 

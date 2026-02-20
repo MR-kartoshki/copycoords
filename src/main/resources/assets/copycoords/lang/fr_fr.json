@@ -11,6 +11,8 @@
   "option.copycoords.showDimensionInCoordinates@Tooltip": "Si activé, la dimension (Overworld, Nether, End) s'affichera lors de la copie des coordonnées.",
   "option.copycoords.coordinateFormat": "Format des coordonnées",
   "option.copycoords.coordinateFormat@Tooltip": "Choisissez comment les coordonnées sont affichées : Espace (100 64 200), Crochets ([100, 64, 200]) ou XYZ (X:100 Y:64 Z:200).",
+  "option.copycoords.decimalPrecision": "Précision décimale",
+  "option.copycoords.decimalPrecision@Tooltip": "Nombre de décimales dans la sortie (0 pour entiers).",
   "message.copycoords.command.no_player": "Impossible de lire la position – aucun joueur chargé.",
   "message.copycoords.command.coords_printed": "Vos coordonnées actuelles sont : %s",
   "message.copycoords.command.copied": "Coordonnées copiées dans le presse-papiers.",

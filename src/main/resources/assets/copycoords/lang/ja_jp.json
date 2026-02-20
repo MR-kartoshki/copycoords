@@ -11,6 +11,8 @@
   "option.copycoords.showDimensionInCoordinates@Tooltip": "有効にすると、座標をコピー時にディメンション (オーバーワールド、ネザー、エンド) が表示されます。",
   "option.copycoords.coordinateFormat": "座標フォーマット",
   "option.copycoords.coordinateFormat@Tooltip": "座標の表示方法を選択します: スペース (100 64 200)、ブラケット ([100, 64, 200])、XYZ (X:100 Y:64 Z:200)。",
+  "option.copycoords.decimalPrecision": "小数精度",
+  "option.copycoords.decimalPrecision@Tooltip": "出力に含める小数点以下の桁数 (0 は整数のみ)。",
   "message.copycoords.command.no_player": "位置を読み込めません。プレイヤーが読み込まれていません。",
   "message.copycoords.command.coords_printed": "現在の座標: %s",
   "message.copycoords.command.copied": "座標をクリップボードにコピーしました。",

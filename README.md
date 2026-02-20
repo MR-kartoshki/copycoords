@@ -17,8 +17,7 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 - `/distcalc` - Calculate distance and direction between two coordinate sets, with bearing and cardinal directions.
 - **Works on Windows, Mac, and Linux** - Clipboard support built in for all platforms.
 - **Shows current dimension** - See which world you're in when you copy (Overworld, Nether, End).
-- **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.
-- **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
+- **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.- **Decimal precision** — choose how many decimal places to include in coordinate output (useful when converting between dimensions).- **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
 - **Customizable in-game** - Open Mod Menu to tweak settings without editing JSON.
 
 ## Coordinate Conversion
@@ -93,6 +92,7 @@ Config is at `%APPDATA%/.minecraft/config/copycoords.json`. But honestly, just u
   - `"space"` - `100 64 200`
   - `"bracket"` - `[100, 64, 200]`
   - `"xyz"` - `X:100 Y:64 Z:200`
+- `decimalPrecision` - Number of decimal places to include in coordinate output (0 = integer only).
 
 ## Languages & Platforms
 

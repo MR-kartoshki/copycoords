@@ -11,6 +11,8 @@
   "option.copycoords.showDimensionInCoordinates@Tooltip": "Если включено, при копировании координат будет показано измерение (Overworld, Nether, End).",
   "option.copycoords.coordinateFormat": "Формат координат",
   "option.copycoords.coordinateFormat@Tooltip": "Выберите способ отображения координат: Пробел (100 64 200), Скобки ([100, 64, 200]) или XYZ (X:100 Y:64 Z:200).",
+  "option.copycoords.decimalPrecision": "Десятичная точность",
+  "option.copycoords.decimalPrecision@Tooltip": "Количество знаков после запятой в выводе (0 для целых чисел).",
   "message.copycoords.command.no_player": "Не удается прочитать позицию - игрок не загружен.",
   "message.copycoords.command.coords_printed": "Ваши текущие координаты: %s",
   "message.copycoords.command.copied": "Координаты скопированы в буфер обмена.",

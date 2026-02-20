@@ -1,64 +1,55 @@
 name: Release
-
 on:
   push:
     tags:
-      - "v*.*.*"
+      - v*.*.*
   workflow_dispatch:
     inputs:
       skip_modrinth:
-        description: 'Skip Modrinth upload'
+        description: Skip Modrinth upload
         required: false
         default: false
         type: boolean
       release_tag:
-        description: 'Tag name for GitHub Release when run manually (example: v1.4.0)'
+        description: "Tag name for GitHub Release when run manually (example: v1.4.0)"
         required: false
-        default: ''
+        default: ""
         type: string
-
 permissions:
   contents: write
-
 jobs:
-
   build-and-publish:
     concurrency:
-      group: "release-${{ github.ref }}"
+      group: release-${{ github.ref }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Validate deps.json schema
         if: hashFiles('deps.json') != ''
         shell: bash
         run: bash .github/scripts/validate-deps.sh
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-
       - name: Make Gradle executable
         run: chmod +x ./gradlew
-
       - name: Build all versions
         run: ./gradlew buildAllVersions --no-daemon
-
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
-
       - name: Discover built versions
         id: discover_built
         shell: bash
-        run: |
+        run: >
           set -euo pipefail
 
+
           VERSIONS=()
+
           if [[ -f settings.gradle ]]; then
             VERSIONS_LINE=$(grep -oP "versions\s*\([^)]*\)" settings.gradle || true)
             if [[ -n "${VERSIONS_LINE}" ]]; then
@@ -69,9 +60,11 @@ jobs:
             fi
           fi
 
+
           if [[ ${#VERSIONS[@]} -eq 0 && -d versions ]]; then
             mapfile -t VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
           fi
+
 
           if [[ ${#VERSIONS[@]} -eq 0 ]]; then
             echo "::warning::No version folders found under versions/; creating fallback versions/1.21"
@@ -79,18 +72,22 @@ jobs:
             VERSIONS=("1.21")
           fi
 
-          echo "discovered_versions=${VERSIONS[*]}" >> "$GITHUB_OUTPUT"
-          printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
 
+          echo "discovered_versions=${VERSIONS[*]}" >> "$GITHUB_OUTPUT"
+
+          printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
       - name: Publish to Modrinth
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.skip_modrinth != true)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' &&
+          inputs.skip_modrinth != true)
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         shell: bash
-        run: |
+        run: >
           set -euo pipefail
 
+
           USER_AGENT="CopyCoordsReleaseWorkflow/1.0 (+github-actions)"
+
 
           retry_request() {
             local attempt=1 max=3 delay=2
@@ -108,14 +105,18 @@ jobs:
             return 1
           }
 
+
           set -euo pipefail
+
 
           if [[ -z "${MODRINTH_TOKEN:-}" ]]; then
             echo "::error::MODRINTH_TOKEN is not set"
             exit 1
           fi
 
+
           DEPS_JSON='[]'
+
           if [[ -f deps.json ]]; then
             bash .github/scripts/validate-deps.sh deps.json
             DEPS_JSON="$(jq -c '.' deps.json)"
@@ -123,7 +124,9 @@ jobs:
             echo "::warning::deps.json not found in repo root; uploading with empty dependencies array."
           fi
 
+
           discovered_versions="${{ steps.discover_built.outputs.discovered_versions }}"
+
           for MC_VERSION in $discovered_versions; do
             echo "Publishing for MC version: ${MC_VERSION}"
 
@@ -213,49 +216,47 @@ jobs:
               exit 1
             fi
           done
-
   github-release:
     concurrency:
-      group: "release-${{ github.ref }}"
+      group: release-${{ github.ref }}
       cancel-in-progress: false
     needs:
       - build-and-publish
-    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name ==
+      'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-
       - name: Make Gradle executable
         run: chmod +x ./gradlew
-
       - name: Build all versions
         run: ./gradlew buildAllVersions --no-daemon
-
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
-
       - name: Gather release jars
         id: list
         shell: bash
-        run: |
+        run: >
           mkdir -p build
+
           find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' > build/release-files.txt
           echo "files<<EOF" >> $GITHUB_OUTPUT
-          cat build/release-files.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
+          cat build/release-files.txt >> $GITHUB_OUTPUT
+
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag ||
+            github.ref_name }}
           target_commitish: ${{ github.sha }}
           body_path: build/current-changelog.md
           files: ${{ steps.list.outputs.files }}

@@ -229,21 +229,24 @@ public class CopyCoords implements ClientModInitializer {
         int y = player.blockPosition().getY();
         int z = player.blockPosition().getZ();
 
-        long[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
+        double[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
         if (converted == null) {
             return 0;
         }
 
         String dimensionId = getDimensionIdForGoal(goal);
-        String coordString = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        String coordString = formatCoordinates(converted[0], converted[1], converted[2], dimensionId);
         
         // Display converted coordinates with clickable component
         net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
-        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        int cx = (int) Math.floor(converted[0]);
+        int cy = (int) Math.floor(converted[1]);
+        int cz = (int) Math.floor(converted[2]);
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, cx, cy, cz, dimensionId);
         Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
 
         if (config.copyConvertedToClipboard) {
-            copyToClipboardWithFeedback(coordString, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+            copyToClipboardWithFeedback(coordString, cx, cy, cz, dimensionId);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -276,26 +279,24 @@ public class CopyCoords implements ClientModInitializer {
             z = Math.floor(player.getZ());
         }
 
-        // Round/convert to integers in the same way other commands do
-        int ix = (int) Math.floor(x);
-        int iy = (int) Math.round(y);
-        int iz = (int) Math.floor(z);
-
-        long[] converted = convertCurrentCoordsToGoal(player, goal, ix, iy, iz);
+        double[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
         if (converted == null) {
             return 0;
         }
 
         String dimensionId = getDimensionIdForGoal(goal);
-        String out = formatCoordinates((int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        String out = formatCoordinates(converted[0], converted[1], converted[2], dimensionId);
         
         // Display converted coordinates with clickable component
         net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
-        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(out, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+        int cx = (int) Math.floor(converted[0]);
+        int cy = (int) Math.floor(converted[1]);
+        int cz = (int) Math.floor(converted[2]);
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(out, cx, cy, cz, dimensionId);
         Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
 
         if (config.copyConvertedToClipboard) {
-            copyToClipboardWithFeedback(out, (int) converted[0], (int) converted[1], (int) converted[2], dimensionId);
+            copyToClipboardWithFeedback(out, cx, cy, cz, dimensionId);
         }
 
         return Command.SINGLE_SUCCESS;
@@ -332,12 +333,13 @@ public class CopyCoords implements ClientModInitializer {
         int y = player.blockPosition().getY();
         int z = player.blockPosition().getZ();
 
-        long[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
+        double[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
         if (converted == null) {
             return 0;
         }
 
-        String coordString = converted[0] + " " + converted[1] + " " + converted[2];
+        String dimensionId = getDimensionIdForGoal(goal);
+        String coordString = formatCoordinates(converted[0], converted[1], converted[2], dimensionId);
         return sendCoordsMessage(target, coordString);
     }
 
@@ -364,7 +366,7 @@ public class CopyCoords implements ClientModInitializer {
         }
     }
 
-    private long[] convertCurrentCoordsToGoal(Player player, String goal, int x, int y, int z) {
+    private double[] convertCurrentCoordsToGoal(Player player, String goal, double x, double y, double z) {
         if (!goal.equals("overworld") && !goal.equals("nether")) {
             Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.unknown_goal", goal));
             return null;
@@ -379,14 +381,20 @@ public class CopyCoords implements ClientModInitializer {
         double rz = z;
 
         if (player.level().dimension().equals(Level.OVERWORLD) && goal.equals("nether")) {
-            rx = Math.floor(x / 8.0);
-            rz = Math.floor(z / 8.0);
+            rx = x / 8.0;
+            rz = z / 8.0;
         } else if (player.level().dimension().equals(Level.NETHER) && goal.equals("overworld")) {
-            rx = Math.floor(x * 8.0);
-            rz = Math.floor(z * 8.0);
+            rx = x * 8.0;
+            rz = z * 8.0;
         }
 
-        return new long[]{(long) rx, y, (long) rz};
+        // mimic old integer behaviour when no decimals requested
+        if (CopyCoords.config.decimalPrecision == 0) {
+            rx = Math.floor(rx);
+            rz = Math.floor(rz);
+        }
+
+        return new double[]{rx, y, rz};
     }
 
     private int sendCoordsMessage(String target, String coordString) {
@@ -435,10 +443,22 @@ public class CopyCoords implements ClientModInitializer {
         return dimensionId;
     }
 
-    // Helper method to format coordinates with optional dimension
-    static String formatCoordinates(int x, int y, int z, String dimensionId) {
+    // Helper method to format coordinates with optional dimension and precision
+    static String formatCoordinates(double x, double y, double z, String dimensionId) {
+        int precision = Math.max(0, CopyCoords.config.decimalPrecision);
+        String fmt = "%." + precision + "f";
+        String xs = String.format(fmt, x);
+        String ys = String.format(fmt, y);
+        String zs = String.format(fmt, z);
+
         CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
-        String coordString = format.format(x, y, z);
+        String coordString;
+        switch (format) {
+            case SPACE_SEPARATED -> coordString = xs + " " + ys + " " + zs;
+            case BRACKET_COMMA -> coordString = "[" + xs + ", " + ys + ", " + zs + "]";
+            case XYZ_LABEL -> coordString = "X:" + xs + " Y:" + ys + " Z:" + zs;
+            default -> coordString = xs + " " + ys + " " + zs;
+        }
         if (CopyCoords.config.showDimensionInCoordinates) {
             coordString += " (" + getDimensionNameFromId(dimensionId) + ")";
         }
