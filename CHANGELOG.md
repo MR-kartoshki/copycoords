@@ -2,6 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.6.1] - 2026-02-21
+
+### Fixed
+- **Clickable coordinates** – clicking coordinates in chat now properly copies the value to clipboard on versions 1.21 through 1.21.4 (overrides were updated to use direct click/hover constructors).
+
 ## [1.6.0] - 2026-02-20
 
 ### Added
