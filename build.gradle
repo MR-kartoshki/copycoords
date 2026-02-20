@@ -250,6 +250,10 @@ processResources {
     }
 }
 
+tasks.named("clean").configure {
+    delete file("bin")
+}
+
 // Version bump utility
 def bumpVersion(String part) {
     def propsFile = file("gradle.properties")
