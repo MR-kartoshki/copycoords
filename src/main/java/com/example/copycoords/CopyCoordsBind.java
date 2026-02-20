@@ -8,39 +8,44 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.InputConstants;
 
-/**
- * Cross‑version keybind helper.
- *
- * The old 1.21.11 implementation hard‑coded a category
- * Identifier `copycoords:copycoords`. the new reflection‑based
- * code attempted to create the same value in one place and
- * `copycoords:keybinds` elsewhere – the result was that the
- * very first keybind created would end up in a different
- * category than the others and the translation key
- * (`key.category.copycoords.keybinds`) never matched.
- *
- * The only real bug in the previous iteration was the
- * inconsistent resource‑location string. the fixed version
- * below always uses `copycoords:keybinds` when constructing
- * the category.
- */
+
 public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
     private static KeyMapping copyConvertedKeyBinding;
     private static KeyMapping copyWithDimensionKeyBinding;
 
-    // translation key that appears in options screen
-    private static final String CATEGORY_KEY = "key.category.copycoords.keybinds";
+    // legacy string used by 1.21.0–1.21.8
+    private static final String LEGACY_CATEGORY_KEY = "key.categories.copycoords";
 
-    // resource‑location components used when creating the category
-    private static final String CATEGORY_NAMESPACE = "copycoords";
-    private static final String CATEGORY_PATH = "keybinds";
+    // constant identifier components used for modern category (1.21.9+)
+    private static final String CATEGORY_ID_NAMESPACE = "copycoords";
+    private static final String CATEGORY_ID_PATH = "keybinds";
 
-    // cached category object (may be a KeyMapping.Category instance,
-    // depending on runtime)
-    private static Object cachedCategory = null;
+    // modern category caching/detection
+    private static volatile Object MODERN_CATEGORY;
+    private static final boolean IS_MODERN;
+
+    // ensure register() runs once
+    private static boolean REGISTERED = false;
+
+    static {
+        boolean modern = false;
+        try {
+            Class.forName("net.minecraft.client.KeyMapping$Category");
+            modern = true;
+        } catch (ClassNotFoundException ignored) {
+            // old releases don't have the nested Category class
+        }
+        IS_MODERN = modern;
+    }
 
     public static void register() {
+        if (REGISTERED) {
+            return;
+        }
+        REGISTERED = true;
+        // no logging here; failures below will be printed if they occur
+
         try {
             KeyMapping km = createKeyMapping("key.copycoords.copy", GLFW.GLFW_KEY_C);
             if (km != null) copyKeyBinding = KeyBindingHelper.registerKeyBinding(km);
@@ -64,21 +69,22 @@ public class CopyCoordsBind {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (copyKeyBinding != null) {
-                while (copyKeyBinding.wasPressed()) {
+                while (copyKeyBinding.consumeClick()) {
                     executeKeybindCopy(client);
                 }
             }
             if (copyConvertedKeyBinding != null) {
-                while (copyConvertedKeyBinding.wasPressed()) {
+                while (copyConvertedKeyBinding.consumeClick()) {
                     executeKeybindCopyConverted(client);
                 }
             }
             if (copyWithDimensionKeyBinding != null) {
-                while (copyWithDimensionKeyBinding.wasPressed()) {
+                while (copyWithDimensionKeyBinding.consumeClick()) {
                     executeKeybindCopyWithDimension(client);
                 }
             }
         });
+
     }
 
     /**
@@ -87,168 +93,49 @@ public class CopyCoordsBind {
      * uses `copycoords:keybinds` – this matches the translation key
      * constant above and keeps all of our bindings together.
      */
-    private static Object getOrCreateCategory() {
-        if (cachedCategory != null) {
-            return cachedCategory;
+    private static Object getModernCategory() {
+        if (!IS_MODERN) {
+            throw new IllegalStateException("modern category requested on legacy runtime");
         }
-
-        try {
-            Class<?> keyClass = Class.forName("net.minecraft.client.KeyMapping");
-            for (Class<?> nested : keyClass.getDeclaredClasses()) {
-                if ("Category".equals(nested.getSimpleName())) {
-                    // try the modern factory method first
+        if (MODERN_CATEGORY == null) {
+            synchronized (CopyCoordsBind.class) {
+                if (MODERN_CATEGORY == null) {
                     try {
-                        Class<?> identifierClass = Class.forName("net.minecraft.util.Identifier");
-                        java.lang.reflect.Method createMethod = null;
-                        try {
-                            createMethod = nested.getMethod("create", identifierClass);
-                        } catch (NoSuchMethodException ignored) {
-                            try {
-                                createMethod = nested.getMethod("of", identifierClass);
-                            } catch (NoSuchMethodException ex) {
-                                createMethod = null;
-                            }
-                        }
-
-                        if (createMethod != null) {
-                            Object id = identifierClass.getConstructor(String.class, String.class)
-                                    .newInstance(CATEGORY_NAMESPACE, CATEGORY_PATH);
-                            cachedCategory = createMethod.invoke(null, id);
-                            return cachedCategory;
-                        }
-                    } catch (Throwable ignored) {
-                        // fall through to constructor path
-                    }
-
-                    // fallback to instantiating the Category via a constructor
-                    try {
-                        java.lang.reflect.Constructor<?> ctor = nested.getDeclaredConstructors()[0];
-                        Class<?>[] paramTypes = ctor.getParameterTypes();
-                        if (paramTypes.length == 1) {
-                            Class<?> rlType = paramTypes[0];
-                            Object rl = null;
-                            try {
-                                rl = rlType.getMethod("fromNamespaceAndPath", String.class, String.class)
-                                        .invoke(null, CATEGORY_NAMESPACE, CATEGORY_PATH);
-                            } catch (NoSuchMethodException e1) {
-                                try {
-                                    rl = rlType.getMethod("parse", String.class)
-                                            .invoke(null, CATEGORY_NAMESPACE + ":" + CATEGORY_PATH);
-                                } catch (NoSuchMethodException e2) {
-                                    try {
-                                        rl = rlType.getConstructor(String.class, String.class)
-                                                .newInstance(CATEGORY_NAMESPACE, CATEGORY_PATH);
-                                    } catch (NoSuchMethodException e3) {
-                                        rl = null;
-                                    }
-                                }
-                            }
-                            if (rl != null) {
-                                cachedCategory = ctor.newInstance(rl);
-                                return cachedCategory;
-                            }
-                        }
-                    } catch (Throwable ignored) {
-                        // nothing we can do here, continue searching
+                        Class<?> identifierClass = Class.forName("net.minecraft.resources.Identifier");
+                        java.lang.reflect.Method factory = identifierClass.getMethod("fromNamespaceAndPath", String.class, String.class);
+                        Object id = factory.invoke(null, CATEGORY_ID_NAMESPACE, CATEGORY_ID_PATH);
+                        Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
+                        java.lang.reflect.Method register = categoryClass.getMethod("register", identifierClass);
+                        MODERN_CATEGORY = register.invoke(null, id);
+                    } catch (Throwable t) {
+                        throw new RuntimeException("Failed to create modern category", t);
                     }
                 }
             }
-        } catch (Throwable ignored) {
-            // ignore and try last‑ditch method below
         }
-
-        // last resort: construct the category directly with reflection
-        try {
-            Class<?> categoryClass = Class.forName("net.minecraft.client.KeyMapping$Category");
-            java.lang.reflect.Constructor<?>[] constructors = categoryClass.getConstructors();
-            if (constructors.length == 0) {
-                throw new RuntimeException("No public constructors found for KeyMapping.Category");
-            }
-
-            java.lang.reflect.Constructor<?> categoryConstructor = constructors[0];
-            Class<?>[] paramTypes = categoryConstructor.getParameterTypes();
-            if (paramTypes.length != 1) {
-                throw new RuntimeException("Expected Category constructor to have 1 parameter, found: " + paramTypes.length);
-            }
-
-            Class<?> resourceLocationClass = paramTypes[0];
-            Object resourceLocation = null;
-            try {
-                resourceLocation = resourceLocationClass.getMethod("fromNamespaceAndPath", String.class, String.class)
-                        .invoke(null, CATEGORY_NAMESPACE, CATEGORY_PATH);
-            } catch (NoSuchMethodException e1) {
-                try {
-                    resourceLocation = resourceLocationClass.getMethod("parse", String.class)
-                            .invoke(null, CATEGORY_NAMESPACE + ":" + CATEGORY_PATH);
-                } catch (NoSuchMethodException e2) {
-                    try {
-                        resourceLocation = resourceLocationClass.getConstructor(String.class, String.class)
-                                .newInstance(CATEGORY_NAMESPACE, CATEGORY_PATH);
-                    } catch (NoSuchMethodException e3) {
-                        throw new RuntimeException("Could not create ResourceLocation with any known method", e1);
-                    }
-                }
-            }
-
-            cachedCategory = categoryConstructor.newInstance(resourceLocation);
-            return cachedCategory;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create category: " + e.getMessage(), e);
-        }
+        return MODERN_CATEGORY;
     }
 
     private static KeyMapping createKeyMapping(String translationKey, int keyCode) {
-        // look for a nested Category class each time; the existence of the
-        // class determines which constructor signatures we try
-        Class<?> categoryClass = null;
-        for (Class<?> c : KeyMapping.class.getDeclaredClasses()) {
-            if ("Category".equals(c.getSimpleName())) {
-                categoryClass = c;
-                break;
+        if (IS_MODERN) {
+            Object cat = getModernCategory();
+            try {
+                java.lang.reflect.Constructor<KeyMapping> ctor = KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, cat.getClass());
+                return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, cat);
+            } catch (Throwable t) {
+                throw new RuntimeException("Modern runtime lacks expected KeyMapping constructor", t);
             }
-        }
-
-        if (categoryClass != null) {
+        } else {
             try {
-                java.lang.reflect.Constructor<KeyMapping> ctor =
-                        KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, categoryClass);
-                Object category = getOrCreateCategory();
-                return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, category);
+                java.lang.reflect.Constructor<KeyMapping> ctor = KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, String.class);
+                return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, LEGACY_CATEGORY_KEY);
             } catch (Throwable ignored) {}
-
             try {
-                java.lang.reflect.Constructor<KeyMapping> ctor =
-                        KeyMapping.class.getConstructor(String.class, int.class, categoryClass);
-                Object category = getOrCreateCategory();
-                return ctor.newInstance(translationKey, keyCode, category);
+                java.lang.reflect.Constructor<KeyMapping> ctor = KeyMapping.class.getConstructor(String.class, int.class, String.class);
+                return ctor.newInstance(translationKey, keyCode, LEGACY_CATEGORY_KEY);
             } catch (Throwable ignored) {}
+            throw new RuntimeException("Legacy runtime lacks expected KeyMapping constructors");
         }
-
-        try {
-            java.lang.reflect.Constructor<KeyMapping> ctor =
-                    KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class, String.class);
-            return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode, CATEGORY_KEY);
-        } catch (Throwable ignored) {}
-
-        try {
-            java.lang.reflect.Constructor<KeyMapping> ctor =
-                    KeyMapping.class.getConstructor(String.class, int.class, String.class);
-            return ctor.newInstance(translationKey, keyCode, CATEGORY_KEY);
-        } catch (Throwable ignored) {}
-
-        try {
-            java.lang.reflect.Constructor<KeyMapping> ctor =
-                    KeyMapping.class.getConstructor(String.class, InputConstants.Type.class, int.class);
-            return ctor.newInstance(translationKey, InputConstants.Type.KEYSYM, keyCode);
-        } catch (Throwable ignored) {}
-
-        try {
-            java.lang.reflect.Constructor<KeyMapping> ctor =
-                    KeyMapping.class.getConstructor(String.class, int.class);
-            return ctor.newInstance(translationKey, keyCode);
-        } catch (Throwable ignored) {}
-
-        throw new RuntimeException("No suitable KeyMapping constructor found for this runtime");
     }
 
     @SuppressWarnings("null")

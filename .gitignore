@@ -40,3 +40,7 @@ id_test.txt
 test_output.txt
 temp_javap.txt
 TEMP_CopyCoordsBind_before.java
+tmp_jarextract
+tmp_minecraft
+-Force
+search_mappings.py
