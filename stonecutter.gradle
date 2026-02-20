@@ -23,23 +23,6 @@ tasks.register("buildAllVersions") {
               ':1.21.11:build'
 }
 
-// Aggregate task: uploads all version JARs to Modrinth in one command
-tasks.register("publishAllToModrinth") {
-    group = "publishing"
-    description = "Upload all Stonecutter version JARs to Modrinth"
-    dependsOn ':1.21:modrinth',
-              ':1.21.1:modrinth',
-              ':1.21.2:modrinth',
-              ':1.21.3:modrinth',
-              ':1.21.4:modrinth',
-              ':1.21.5:modrinth',
-              ':1.21.6:modrinth',
-              ':1.21.7:modrinth',
-              ':1.21.8:modrinth',
-              ':1.21.9:modrinth',
-              ':1.21.10:modrinth',
-              ':1.21.11:modrinth'
-}
 
 // New aggregate task: publish only the REMAPPED jars for all Stonecutter targets to Modrinth
 tasks.register("publishAllModrinth") {

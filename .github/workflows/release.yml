@@ -22,8 +22,10 @@ permissions:
 
 jobs:
 
-
   build-and-publish:
+    concurrency:
+      group: "release-${{ github.ref }}"
+      cancel-in-progress: false
     runs-on: ubuntu-latest
 
     steps:
@@ -86,6 +88,26 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         shell: bash
         run: |
+          set -euo pipefail
+
+          USER_AGENT="CopyCoordsReleaseWorkflow/1.0 (+github-actions)"
+
+          retry_request() {
+            local attempt=1 max=3 delay=2
+            while true; do
+              "$@" && return 0 || {
+                status=$?
+                # if curl returns non-zero but we can't see HTTP code, break
+                if [[ $status -ne 22 && $status -ne 18 ]]; then
+                  return $status
+                fi
+                # read http code from output
+                break
+              }
+            done
+            return 1
+          }
+
           set -euo pipefail
 
           if [[ -z "${MODRINTH_TOKEN:-}" ]]; then
@@ -166,6 +188,7 @@ jobs:
 
             CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
               -H "Authorization: ${MODRINTH_TOKEN}" \
+              -H "User-Agent: ${USER_AGENT}" \
               "${CHECK_URL}")"
 
             if [[ "$CHECK_STATUS" != "200" ]]; then
@@ -192,6 +215,9 @@ jobs:
           done
 
   github-release:
+    concurrency:
+      group: "release-${{ github.ref }}"
+      cancel-in-progress: false
     needs:
       - build-and-publish
     if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
@@ -215,11 +241,21 @@ jobs:
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
 
+      - name: Gather release jars
+        id: list
+        shell: bash
+        run: |
+          mkdir -p build
+          find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' > build/release-files.txt
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat build/release-files.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
           target_commitish: ${{ github.sha }}
           body_path: build/current-changelog.md
-          files: |
-            versions/*/build/libs/*.jar
+          files: ${{ steps.list.outputs.files }}
