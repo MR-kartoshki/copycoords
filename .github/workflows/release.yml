@@ -133,7 +133,7 @@ jobs:
             PROJECT_ID="GzPkXb2a"
             MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
             CHANGELOG="$(cat build/current-changelog.md)"
-            VERSION_NUMBER="${MOD_VERSION}-${MC_VERSION}"
+            VERSION_NUMBER="${MOD_VERSION}"
             VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
             GAME_VERSIONS_JSON="$(jq -cn --arg mc "$MC_VERSION" '[$mc]')"
             FILE_PARTS_JSON='["file"]'
