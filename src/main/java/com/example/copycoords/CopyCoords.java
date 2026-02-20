@@ -1,3 +1,4 @@
+// Why the fuck is this so long? I just want to copy my coordinates, not write a novel about it. Also, why do I need to support multiple versions of Minecraft? Can't I just make it for the latest version and be done with it? Ugh, modding is so much work.
 package com.example.copycoords;
 
 import com.mojang.brigadier.Command;

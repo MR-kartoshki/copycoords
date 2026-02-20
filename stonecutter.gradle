@@ -41,5 +41,55 @@ tasks.register("publishAllToModrinth") {
               ':1.21.11:modrinth'
 }
 
+// New aggregate task: publish only the REMAPPED jars for all Stonecutter targets to Modrinth
+tasks.register("publishAllModrinth") {
+    group = "publishing"
+    description = "Publish remapped jars for all Stonecutter targets to Modrinth (remapJar only)"
+
+    def versions = [
+        '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
+        '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11'
+    ]
+
+    // Ensure remapJar runs for every target and then invoke each subproject's modrinth task
+    versions.each { v ->
+        dependsOn ":${v}:remapJar"
+        dependsOn ":${v}:modrinth"
+    }
+}
+
+// Configure each Stonecutter subproject's Modrinth upload at configuration time
+// (configure the :<version>:modrinth TASK where available; guarded to skip missing tasks)
+[ '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
+  '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11' ].each { v ->
+    def p = project(":${v}")
+
+    def hasRemap = p.tasks.findByName('remapJar') != null
+    def hasModTask = p.tasks.findByName('modrinth') != null
+    def hasModExt = p.extensions.findByName('modrinth') != null
+
+    // Prefer configuring the modrinth TASK itself (at configuration time)
+    if (hasModTask && hasRemap) {
+        def remapProv = p.tasks.named('remapJar')
+        p.tasks.named('modrinth').configure { modTask ->
+            dependsOn remapProv
+        }
+        // also mirror on extension if present (extension will always accept these)
+        if (hasModExt) {
+            p.modrinth.uploadFile = p.tasks.named('remapJar').flatMap { it.archiveFile }
+            p.modrinth.versionNumber = "${project.mod_version}+${v}"
+            p.modrinth.gameVersions = [v]
+        }
+    } else if (hasModExt && hasRemap) {
+        // No modrinth task, but extension exists — configure extension safely
+        p.modrinth.uploadFile = p.tasks.named('remapJar').flatMap { it.archiveFile }
+        p.modrinth.versionNumber = "${project.mod_version}+${v}"
+        p.modrinth.gameVersions = [v]
+    } else {
+        // Skip projects missing required tasks/extensions
+        // (intentionally no-op)
+    }
+}
+
 // CurseForge publishing disabled - the plugin's DSL is incompatible with per-version uploads
 // For CurseForge releases, upload manually from: versions/*/build/libs/*.jar

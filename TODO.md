@@ -1,22 +1,14 @@
 ## High Priority
-- [x] Cross-platform clipboard support - Currently only works on Windows (clip.exe). Linux/Mac users can't use clipboard features.
-
-- [x] Additional language translations - Only English exists. Adding more languages would help international players.
+- Nothing yet
 
 ## Medium Priority
-- [x] Dimension indicator in output - When copying coords, it doesn't show which dimension you're currently in (useful when sharing).
-
-- [x] Configurable coordinate format - No way to customize output (e.g., [100, 64, 200] vs X:100 Y:64 Z:200 vs current 100 64 200).
-
-- [x] Coordinate bookmarks/history - No way to save favorite locations or view recently copied coordinates.
-
-- [x] Distance calculator - Can't calculate distance between two coordinate sets or get direction/bearing.
-
-- [x] Additional keybinds - Only one keybind for basic copy. Could add keybinds for "copy converted to nether/overworld" or "copy with dimension name".
+- [ ] Bookmark import/export (JSON) — allow sharing/backing up bookmarks across instances.
+- [ ] Per-bookmark labels/notes + quick-jump command (e.g., `/gotobookmark <name>`).
+- [ ] Command/unit tests for `/msgcoords` and bookmark workflows.
 
 ## Nice to Have
-- [x] Clickable chat coordinates - Make coordinate output clickable to re-copy or show on waypoint
-- [ ] Decimal precision option - Currently always rounds to integers
-- [ ] Copy to chat input - Paste coords into chat box instead of sending as message (configurable in config/mod menu)
-- [ ] Config GUI improvements - Add keybind customization, format templates, etc.
-- [x] /cc command - /copycoords shortcut
+- [ ] Decimal precision option — allow configurable decimal places for coordinate output.
+- [ ] Copy to chat input — paste coords into chat input without sending (configurable).
+- [ ] Config GUI improvements — add format templates, live preview, and keybind editor.
+- [ ] Map-integration links — generate Dynmap/BlueMap or web-map links for coordinates.
+- [ ] Opt-in anonymous telemetry to understand feature usage (privacy-respecting).

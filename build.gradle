@@ -1,4 +1,4 @@
-// fuck gradle frfr
+// fuck gradle frfr 
 import java.util.Properties
 
 plugins {
@@ -135,13 +135,52 @@ repositories {
     }
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs = [rootProject.file('src/main/java')]
+if (project == rootProject) {
+    sourceSets {
+        main {
+            java {
+                srcDirs = [rootProject.file('src/main/java')]
+            }
+            resources {
+                srcDirs = [rootProject.file('src/main/resources')]
+            }
         }
-        resources {
-            srcDirs = [rootProject.file('src/main/resources')]
+    }
+} else {
+    sourceSets {
+        main {
+            java {
+                // include per-version sources first, then shared root sources so overrides are possible
+                srcDirs = [file('src/main/java'), rootProject.file('src/main/java')]
+            }
+            resources {
+                srcDirs = [file('src/main/resources'), rootProject.file('src/main/resources')]
+            }
+        }
+    }
+
+    // Exclude root-source files that are overridden by per-version files to avoid duplicate-class compile errors
+    tasks.withType(JavaCompile).configureEach { JavaCompile jc ->
+        if (project != rootProject) {
+            jc.doFirst {
+                def rootSrc = rootProject.file('src/main/java').canonicalFile
+                def localSrc = project.file('src/main/java').canonicalFile
+                def filtered = jc.source.filter { File f ->
+                    try {
+                        def path = f.canonicalFile.path
+                        if (path.startsWith(rootSrc.path) && !path.startsWith(localSrc.path)) {
+                            // compute relative path within root src
+                            def rel = path - rootSrc.path
+                            def overrideFile = new File(localSrc.path + rel)
+                            return !overrideFile.exists()
+                        }
+                        return true
+                    } catch (Exception e) {
+                        return true
+                    }
+                }
+                jc.source = filtered
+            }
         }
     }
 }
@@ -328,7 +367,7 @@ modrinth {
     versionNumber = "${project.mod_version}+${activeVersion}"
     versionName = "CopyCoords ${project.mod_version} for MC ${activeVersion}"
     versionType = "release"
-    uploadFile = tasks.remapJar
+    uploadFile = tasks.remapJar.archiveFile
     gameVersions = [activeVersion]
     loaders = ["fabric"]
     changelog = getCurrentChangelog()

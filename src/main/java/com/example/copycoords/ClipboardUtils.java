@@ -1,3 +1,4 @@
+
 package com.example.copycoords;
 
 import java.io.OutputStream;

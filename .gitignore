@@ -38,3 +38,5 @@ client_output.txt
 debug_id.txt
 id_test.txt
 test_output.txt
+temp_javap.txt
+TEMP_CopyCoordsBind_before.java
