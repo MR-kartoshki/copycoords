@@ -17,7 +17,8 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 - `/distcalc` - Calculate distance and direction between two coordinate sets, with bearing and cardinal directions.
 - **Works on Windows, Mac, and Linux** - Clipboard support built in for all platforms.
 - **Shows current dimension** - See which world you're in when you copy (Overworld, Nether, End).
-- **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.- **Decimal precision** — choose how many decimal places to include in coordinate output (useful when converting between dimensions).- **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
+- **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.
+- **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
 - **Customizable in-game** - Open Mod Menu to tweak settings without editing JSON.
 
 ## Coordinate Conversion
@@ -49,6 +50,12 @@ The conversion is standard Minecraft (8:1 scale on X/Z), and Y stays the same.
 - `/coordbookmark export <file>` - write current bookmarks to disk as JSON
 - `/coordbookmark import <file>` - load bookmarks from a previously-exported JSON file
   - If bookmark names contain spaces, wrap them in quotes (e.g., `/distcalc bookmarks "Base One" "Base Two"`)
+
+## Chat-pasting option
+
+A new configuration flag `pasteToChatInput` is available (disabled by default). When enabled, any coordinates copied by a command or keybind will appear in the chat input box automatically instead of being copied to the clipboard. This makes it easy to edit or send them just by pressing `Enter`.
+
+You can toggle the behaviour via Mod Menu (see the configuration section below).
 
 ## Keybinds
 
@@ -88,11 +95,11 @@ Config is at `%APPDATA%/.minecraft/config/copycoords.json`. But honestly, just u
 - `copyToClipboard` - Auto-copy when you use `/copycoords`
 - `copyConvertedToClipboard` - Auto-copy when you use `/convertcoords`
 - `showDimensionInCoordinates` - Include dimension name in output (e.g., `100 64 200 (Overworld)`)
+- `pasteToChatInput` - If set to `true`, coordinates will be placed in the chat input box instead of the clipboard. Useful for quick sharing; press Enter to send immediately.
 - `coordinateFormat` - How to display coords:
   - `"space"` - `100 64 200`
   - `"bracket"` - `[100, 64, 200]`
   - `"xyz"` - `X:100 Y:64 Z:200`
-- `decimalPrecision` - Number of decimal places to include in coordinate output (0 = integer only).
 
 ## Languages & Platforms
 

@@ -388,11 +388,6 @@ public class CopyCoords implements ClientModInitializer {
             rz = z * 8.0;
         }
 
-        // mimic old integer behaviour when no decimals requested
-        if (CopyCoords.config.decimalPrecision == 0) {
-            rx = Math.floor(rx);
-            rz = Math.floor(rz);
-        }
 
         return new double[]{rx, y, rz};
     }
@@ -445,11 +440,10 @@ public class CopyCoords implements ClientModInitializer {
 
     // Helper method to format coordinates with optional dimension and precision
     static String formatCoordinates(double x, double y, double z, String dimensionId) {
-        int precision = Math.max(0, CopyCoords.config.decimalPrecision);
-        String fmt = "%." + precision + "f";
-        String xs = String.format(fmt, x);
-        String ys = String.format(fmt, y);
-        String zs = String.format(fmt, z);
+        // no decimal-precision option any more; just use default string conversion
+        String xs = String.valueOf(x);
+        String ys = String.valueOf(y);
+        String zs = String.valueOf(z);
 
         CoordinateFormat format = CoordinateFormat.fromId(CopyCoords.config.coordinateFormat);
         String coordString;
@@ -471,11 +465,61 @@ public class CopyCoords implements ClientModInitializer {
         }
     }
 
+    /**
+     * Open the chat input screen prefilled with the given text.
+     * Uses reflection to handle both legacy (String) and modern
+     * (String, boolean) constructors; if neither is available it
+     * silently does nothing.
+     */
+    public static void openChatWithText(String text) {
+        Minecraft mc = Minecraft.getInstance();
+        Class<?> cls = net.minecraft.client.gui.screens.ChatScreen.class;
+        // try constructor that accepts initial text directly
+        try {
+            try {
+                java.lang.reflect.Constructor<?> ctor = cls.getConstructor(String.class, boolean.class);
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance(text, false));
+                return;
+            } catch (Throwable t) {
+                java.lang.reflect.Constructor<?> ctor = cls.getConstructor(String.class);
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance(text));
+                return;
+            }
+        } catch (Throwable ignored) {
+            // constructors with text unavailable, fall back to blank and reflection
+        }
+
+        // fallback: open blank chat then insert text reflectively
+        try {
+            try {
+                java.lang.reflect.Constructor<?> ctor = cls.getConstructor(String.class, boolean.class);
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance("", false));
+            } catch (Throwable t) {
+                java.lang.reflect.Constructor<?> ctor = cls.getConstructor(String.class);
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance(""));
+            }
+        } catch (Throwable ignored) {
+        }
+
+        if (mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen) {
+            try {
+                Class<?> csClass = mc.screen.getClass();
+                java.lang.reflect.Method m = csClass.getDeclaredMethod("insertText", String.class, boolean.class);
+                m.setAccessible(true);
+                m.invoke(mc.screen, text, false);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     private void copyToClipboardWithFeedback(String text, int x, int y, int z, String dimensionId) {
         try {
-            // Copy to clipboard using cross-platform utility
-            ClipboardUtils.copyToClipboard(text);
-            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
+            if (config != null && config.pasteToChatInput) {
+                openChatWithText(text);
+            } else {
+                ClipboardUtils.copyToClipboard(text);
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.command.copied"));
+            }
             addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             String errorMsg = e.getMessage();

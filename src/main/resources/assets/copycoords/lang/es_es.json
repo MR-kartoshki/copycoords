@@ -11,8 +11,7 @@
   "option.copycoords.showDimensionInCoordinates@Tooltip": "Si está habilitado, la dimensión (Mundo Principal, Inframundo, End) se mostrará al copiar coordenadas.",
   "option.copycoords.coordinateFormat": "Formato de coordenadas",
   "option.copycoords.coordinateFormat@Tooltip": "Elige cómo se muestran las coordenadas: Espacio (100 64 200), Corchetes ([100, 64 200]) o XYZ (X:100 Y:64 Z:200).",
-  "option.copycoords.decimalPrecision": "Precisión decimal",
-  "option.copycoords.decimalPrecision@Tooltip": "Número de lugares decimales en la salida (0 para enteros)."{
+
   "message.copycoords.command.no_player": "No se puede leer la posición – no hay jugador cargado.",
   "message.copycoords.command.coords_printed": "Tus coordenadas actuales son: %s",
   "message.copycoords.command.copied": "Coordenadas copiadas al portapapeles.",

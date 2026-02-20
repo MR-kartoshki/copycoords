@@ -15,8 +15,8 @@ public class CopyCoordsConfig {
     public boolean copyToClipboard = true;
     public boolean copyConvertedToClipboard = true;
     public boolean showDimensionInCoordinates = true;
+    public boolean pasteToChatInput = false; // if true, paste coords into chat input instead of (or in addition to) clipboard
     public String coordinateFormat = "space"; // "space", "bracket", or "xyz"
-    public int decimalPrecision = 0; // number of decimal places to include in output (0 = integer)   
 
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()

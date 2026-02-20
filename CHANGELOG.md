@@ -5,7 +5,10 @@ All notable changes to CopyCoords will be documented in this file.
 ## [1.6.0] - 2026-02-20
 
 ### Added
-- **Decimal precision option** — configurable number of decimal places for coordinate output (0 = integer only).
+- **Paste-to-chat option** — new config toggle allowing coordinates to be placed directly into the chat input box instead of (or in addition to) copying to clipboard.  Works with keybinds and commands.
+
+### Fixed
+- **Keybinds not registering for 1.21.9+** - fixed an issue where keybinds just wouldnt work in 1.21.9+ versions of the mod.
 
 ## [1.5.1] - 2026-02-20
 

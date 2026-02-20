@@ -12,8 +12,7 @@
   "option.copycoords.showDimensionInCoordinates@Tooltip": "Wenn aktiviert, wird die Dimension (Oberwelt, Nether, Ende) beim Kopieren von Koordinaten angezeigt.",
   "option.copycoords.coordinateFormat": "Koordinatenformat",
   "option.copycoords.coordinateFormat@Tooltip": "Wählen Sie, wie Koordinaten angezeigt werden: Leerzeichen (100 64 200), Klammern ([100, 64, 200]) oder XYZ (X:100 Y:64 Z:200).",
-  "option.copycoords.decimalPrecision": "Dezimalpräzision",
-  "option.copycoords.decimalPrecision@Tooltip": "Anzahl der Dezimalstellen in der Ausgabe (0 für Ganzzahlen).",
+
   "message.copycoords.command.no_player": "Position kann nicht ausgelesen werden – kein Spieler geladen.",
   "message.copycoords.command.coords_printed": "Deine aktuellen Koordinaten sind: %s",
   "message.copycoords.command.copied": "Koordinaten in die Zwischenablage kopiert.",

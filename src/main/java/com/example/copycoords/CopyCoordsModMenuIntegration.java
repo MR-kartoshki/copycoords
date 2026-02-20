@@ -72,13 +72,14 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newFormat -> CopyCoords.config.coordinateFormat = newFormat.getId())
                     .build());
 
-            // Decimal precision field
-            general.addEntry(entryBuilder.startIntField(
-                            Component.literal("Decimal precision"),
-                            CopyCoords.config.decimalPrecision)
-                    .setDefaultValue(0)
-                    .setTooltip(Component.literal("How many decimal places to include in coordinate output (0 = integers only)."))
-                    .setSaveConsumer(newValue -> CopyCoords.config.decimalPrecision = newValue)
+
+            // Paste to chat input option
+            general.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Paste coordinates into chat input"),
+                            CopyCoords.config.pasteToChatInput)
+                    .setDefaultValue(false)
+                    .setTooltip(Component.literal("If enabled, copied coordinates will be placed into the chat input box (without sending)."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.pasteToChatInput = newValue)
                     .build());
 
             // Save config to file when changes are applied

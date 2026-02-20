@@ -74,10 +74,19 @@ public class CopyCoordsBind {
         String coordString = CopyCoords.formatCoordinates(x, y, z, dimensionId);
 
         try {
-            ClipboardUtils.copyToClipboard(coordString);
-            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates to clipboard: ");
-            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
-            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            if (CopyCoords.config != null && CopyCoords.config.pasteToChatInput) {
+                try {
+                    CopyCoords.openChatWithText(coordString);
+                } catch (Throwable t) {
+                    ClipboardUtils.copyToClipboard(coordString);
+                    minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Copied coordinates to clipboard: ").append(ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId)));
+                }
+            } else {
+                ClipboardUtils.copyToClipboard(coordString);
+                net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates to clipboard: ");
+                net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+                minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            }
             CopyCoords.addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             String errorMsg = e.getMessage();
@@ -125,10 +134,19 @@ public class CopyCoordsBind {
         String coordString = CopyCoords.formatCoordinates(convertedX, y, convertedZ, convertedDimensionId);
 
         try {
-            ClipboardUtils.copyToClipboard(coordString);
-            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied converted coordinates to clipboard: ");
-            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, convertedX, y, convertedZ, convertedDimensionId);
-            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            if (CopyCoords.config != null && CopyCoords.config.pasteToChatInput) {
+                try {
+                    CopyCoords.openChatWithText(coordString);
+                } catch (Throwable t) {
+                    ClipboardUtils.copyToClipboard(coordString);
+                    minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Copied converted coordinates to clipboard: ").append(ClickableCoordinateComponent.createClickableCoordinate(coordString, convertedX, y, convertedZ, convertedDimensionId)));
+                }
+            } else {
+                ClipboardUtils.copyToClipboard(coordString);
+                net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied converted coordinates to clipboard: ");
+                net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, convertedX, y, convertedZ, convertedDimensionId);
+                minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            }
             CopyCoords.addHistoryEntry(convertedX, y, convertedZ, convertedDimensionId);
         } catch (Exception e) {
             String errorMsg = e.getMessage();
@@ -156,10 +174,19 @@ public class CopyCoordsBind {
         String coordString = format.format(x, y, z) + " (" + CopyCoords.getDimensionNameFromId(dimensionId) + ")";
 
         try {
-            ClipboardUtils.copyToClipboard(coordString);
-            net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates with dimension to clipboard: ");
-            net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
-            minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            if (CopyCoords.config != null && CopyCoords.config.pasteToChatInput) {
+                try {
+                    CopyCoords.openChatWithText(coordString);
+                } catch (Throwable t) {
+                    ClipboardUtils.copyToClipboard(coordString);
+                    minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Copied coordinates with dimension to clipboard: ").append(ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId)));
+                }
+            } else {
+                ClipboardUtils.copyToClipboard(coordString);
+                net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Copied coordinates with dimension to clipboard: ");
+                net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+                minecraft.gui.getChat().addMessage(message.append(clickableCoord));
+            }
             CopyCoords.addHistoryEntry(x, y, z, dimensionId);
         } catch (Exception e) {
             String errorMsg = e.getMessage();
