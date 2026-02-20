@@ -23,6 +23,7 @@ import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.List;
 
 // Main mod class that initializes the mod and registers the /copycoords command
@@ -147,6 +148,14 @@ public class CopyCoords implements ClientModInitializer {
                     .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
                         .suggests(bookmarkSuggestions)
                         .executes(context -> executeBookmarkRemove(StringArgumentType.getString(context, "name")))));
+                // export / import subcommands for bookmarks
+                bookmark.then(ClientCommandManager.literal("export")
+                    .then(ClientCommandManager.argument("file", StringArgumentType.greedyString())
+                        .executes(ctx -> executeBookmarkExport(StringArgumentType.getString(ctx, "file")))));
+                bookmark.then(ClientCommandManager.literal("import")
+                    .then(ClientCommandManager.argument("file", StringArgumentType.greedyString())
+                        .executes(ctx -> executeBookmarkImport(StringArgumentType.getString(ctx, "file")))));
+
                 dispatcher.register(bookmark);
 
                 // Register /distcalc for calculating distance between two coordinate sets
@@ -589,6 +598,34 @@ public class CopyCoords implements ClientModInitializer {
         }
 
         Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Bookmark not found: " + name));
+        return 0;
+    }
+
+    private int executeBookmarkExport(String file) {
+        if (dataStore == null) return 0;
+        try {
+            Path path = Path.of(file);
+            if (dataStore.exportBookmarks(path)) {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.bookmark.exported", path.toString()));
+                return Command.SINGLE_SUCCESS;
+            }
+        } catch (Exception e) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.bookmark.export_failed", e.getMessage()));
+        }
+        return 0;
+    }
+
+    private int executeBookmarkImport(String file) {
+        if (dataStore == null) return 0;
+        try {
+            Path path = Path.of(file);
+            if (dataStore.importBookmarks(path)) {
+                Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.bookmark.imported", path.toString()));
+                return Command.SINGLE_SUCCESS;
+            }
+        } catch (Exception e) {
+            Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("message.copycoords.bookmark.import_failed", e.getMessage()));
+        }
         return 0;
     }
 

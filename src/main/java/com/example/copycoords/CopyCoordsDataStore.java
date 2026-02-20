@@ -118,6 +118,46 @@ public class CopyCoordsDataStore {
         return names;
     }
 
+    /**
+     * Export current bookmarks to JSON file at given path. Returns true on success.
+     */
+    public boolean exportBookmarks(Path out) {
+        try {
+            Files.createDirectories(out.getParent());
+            String json = GSON.toJson(bookmarks.values());
+            Files.writeString(out, json);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Failed to export bookmarks: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Import bookmarks from JSON file; existing names are overwritten.
+     */
+    public boolean importBookmarks(Path in) {
+        if (!Files.exists(in)) {
+            System.err.println("Import file not found: " + in);
+            return false;
+        }
+        try {
+            String json = Files.readString(in);
+            BookmarkEntry[] arr = GSON.fromJson(json, BookmarkEntry[].class);
+            if (arr != null) {
+                for (BookmarkEntry entry : arr) {
+                    String key = normalizeName(entry.name);
+                    bookmarks.put(key, entry);
+                }
+                save();
+            }
+            return true;
+        } catch (IOException e) {
+            System.err.println("Failed to import bookmarks: " + e.getMessage());
+            return false;
+        }
+    }
+
     private String normalizeName(String name) {
         return name.trim().toLowerCase(Locale.ROOT);
     }
