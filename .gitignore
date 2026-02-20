@@ -4,7 +4,10 @@ build/
 out/
 gradle-app.setting
 build_output.txt
-versions/
+versions/*/build/
+versions/*/bin/
+versions/*/run/
+/tmp/
 
 # IDE
 .idea/

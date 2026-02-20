@@ -7,13 +7,19 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.resources.Identifier;
 
+/**
+ * Version override for 1.21.11.
+ * Uses the typed KeyMapping.Category API with Identifier (renamed from ResourceLocation in 1.21.11).
+ */
 public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
     private static KeyMapping copyConvertedKeyBinding;
     private static KeyMapping copyWithDimensionKeyBinding;
 
-    private static final String CATEGORY_KEY = "key.categories.copycoords";
+    private static final KeyMapping.Category CATEGORY =
+            KeyMapping.Category.register(Identifier.fromNamespaceAndPath("copycoords", "keybinds"));
 
     private static boolean REGISTERED = false;
 
@@ -49,12 +55,8 @@ public class CopyCoordsBind {
         });
     }
 
-    /**
-     * Legacy constructor for 1.21.0-1.21.8: category is a plain String.
-     * Overridden by per-version sources in 1.21.9+.
-     */
     private static KeyMapping createKeyMapping(String translationKey, int keyCode) {
-        return new KeyMapping(translationKey, InputConstants.Type.KEYSYM, keyCode, CATEGORY_KEY);
+        return new KeyMapping(translationKey, InputConstants.Type.KEYSYM, keyCode, CATEGORY);
     }
 
     @SuppressWarnings("null")
