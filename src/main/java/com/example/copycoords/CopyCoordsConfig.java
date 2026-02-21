@@ -28,17 +28,31 @@ public class CopyCoordsConfig {
 
     private static Path configPath;
 
+    private static Path getScopedConfigPath() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        return configDir.resolve("copycoords").resolve("copycoords.json");
+    }
+
+    private static Path getLegacyConfigPath() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        return configDir.resolve("copycoords.json");
+    }
+
     // Load configuration from file or create default if not found
     public static CopyCoordsConfig load() {
-        Path configDir = FabricLoader.getInstance().getConfigDir();
-        configPath = configDir.resolve("copycoords.json");
+        configPath = getScopedConfigPath();
+        Path legacyPath = getLegacyConfigPath();
 
         // Try to read existing config file
-        if (Files.exists(configPath)) {
+        Path readPath = Files.exists(configPath) ? configPath : legacyPath;
+        if (Files.exists(readPath)) {
             try {
-                String json = Files.readString(configPath);
+                String json = Files.readString(readPath);
                 CopyCoordsConfig config = GSON.fromJson(json, CopyCoordsConfig.class);
                 if (config != null) {
+                    if (!configPath.equals(readPath)) {
+                        config.save();
+                    }
                     return config;
                 }
             } catch (IOException e) {
@@ -55,8 +69,7 @@ public class CopyCoordsConfig {
     // Save current configuration to file
     public void save() {
         if (configPath == null) {
-            Path configDir = FabricLoader.getInstance().getConfigDir();
-            configPath = configDir.resolve("copycoords.json");
+            configPath = getScopedConfigPath();
         }
         try {
             // Ensure config directory exists before writing

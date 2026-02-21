@@ -2,6 +2,7 @@ package com.example.copycoords;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
+import com.example.copycoords.telemetry.TelemetryConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
@@ -20,6 +21,7 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
             if (CopyCoords.config == null) {
                 CopyCoords.config = CopyCoordsConfig.load();
             }
+                        TelemetryConfig telemetryConfig = TelemetryConfig.loadOrCreate();
             // Build the configuration GUI
             ConfigBuilder builder = ConfigBuilder.create()
                     .setParentScreen(parent)
@@ -82,8 +84,21 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> CopyCoords.config.pasteToChatInput = newValue)
                     .build());
 
+            ConfigCategory telemetry = builder.getOrCreateCategory(Component.literal("Telemetry"));
+
+            telemetry.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Enable telemetry"),
+                            telemetryConfig.enabled)
+                    .setDefaultValue(true)
+                    .setTooltip(Component.literal("If enabled, CopyCoords sends a minimal anonymous ping at most once every 24 hours."))
+                    .setSaveConsumer(newValue -> telemetryConfig.enabled = newValue)
+                    .build());
+
             // Save config to file when changes are applied
-            builder.setSavingRunnable(() -> CopyCoords.config.save());
+            builder.setSavingRunnable(() -> {
+                CopyCoords.config.save();
+                telemetryConfig.save();
+            });
 
             return builder.build();
         };

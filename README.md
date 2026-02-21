@@ -21,6 +21,8 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 - **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
 - **Customizable in-game** - Open Mod Menu to tweak settings without editing JSON.
 
+###### This mod collects anonymous usage statistics. No personal data is collected. This can be disabled by modifying the config at `config/copycoords/telemetry.json`
+
 ## Coordinate Conversion
 
 Wanna check your Nether coordinates in the Overworld? Use `/convertcoords`.

@@ -21,16 +21,27 @@ public class CopyCoordsDataStore {
 
     private static Path dataPath;
 
+    private static Path getScopedDataPath() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        return configDir.resolve("copycoords").resolve("copycoords-data.json");
+    }
+
+    private static Path getLegacyDataPath() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        return configDir.resolve("copycoords-data.json");
+    }
+
     private List<HistoryEntry> history = new ArrayList<>();
     private Map<String, BookmarkEntry> bookmarks = new LinkedHashMap<>();
 
     public static CopyCoordsDataStore load() {
-        Path configDir = FabricLoader.getInstance().getConfigDir();
-        dataPath = configDir.resolve("copycoords-data.json");
+        dataPath = getScopedDataPath();
+        Path legacyPath = getLegacyDataPath();
 
-        if (Files.exists(dataPath)) {
+        Path readPath = Files.exists(dataPath) ? dataPath : legacyPath;
+        if (Files.exists(readPath)) {
             try {
-                String json = Files.readString(dataPath);
+                String json = Files.readString(readPath);
                 CopyCoordsDataStore data = GSON.fromJson(json, CopyCoordsDataStore.class);
                 if (data != null) {
                     if (data.history == null) {
@@ -38,6 +49,9 @@ public class CopyCoordsDataStore {
                     }
                     if (data.bookmarks == null) {
                         data.bookmarks = new LinkedHashMap<>();
+                    }
+                    if (!dataPath.equals(readPath)) {
+                        data.save();
                     }
                     return data;
                 }
@@ -53,8 +67,7 @@ public class CopyCoordsDataStore {
 
     public void save() {
         if (dataPath == null) {
-            Path configDir = FabricLoader.getInstance().getConfigDir();
-            dataPath = configDir.resolve("copycoords-data.json");
+            dataPath = getScopedDataPath();
         }
         try {
             Files.createDirectories(dataPath.getParent());
