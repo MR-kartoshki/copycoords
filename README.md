@@ -17,7 +17,7 @@ CopyCoords is a client-side Fabric mod that makes coordinates faster to copy, co
 
 ## Installation
 
-1. Install Fabric Loader for Minecraft 1.21.x
+1. Install Fabric Loader for the Minecraft version you intend to use
 2. Install dependencies: Fabric API, Cloth Config, Mod Menu
 3. Put `copycoords-<version>.jar` in your `mods` folder
 4. Launch Minecraft
