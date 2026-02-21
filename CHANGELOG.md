@@ -5,24 +5,20 @@ All notable changes to CopyCoords will be documented in this file.
 ## [1.7.0] - 2026-02-21
 
 ### Added
-- **Client-only telemetry pipeline** with strict privacy payload (`mc`, `e`, `l`, `m`) and async HTTP sender.
-- **Telemetry config file** at `config/copycoords/telemetry.json` with opt-out support (`enabled: false`).
-- **Mod Menu telemetry toggle** to enable or disable telemetry in-game.
-- **Map integration links (manual config)** for coordinate outputs.
+- **Optional map links** for coordinate output.
   - New optional templates for Dynmap, BlueMap, and generic web maps.
-  - Disabled by default and only active when explicitly enabled in config.
+  - Available in Mod Menu and disabled by default.
+- **Telemetry toggle in Mod Menu**.
 
 ### Changed
-- **Config/data storage paths** moved under `config/copycoords/`:
+- **Config and data files moved** under `config/copycoords/`:
   - `copycoords.json`
   - `copycoords-data.json`
-- Added automatic legacy fallback/migration from old root `config/` file locations.
-- Telemetry endpoint is now hardcoded; endpoint/client-id settings are no longer user-configurable.
+- Existing files in the old `config/` root are migrated automatically.
 
-### Safety
-- Telemetry send is fully asynchronous and never blocks the Minecraft main thread.
-- Telemetry only marks successful send windows after successful HTTP completion.
-- Map links fail safely when Dynmap/BlueMap are not installed, templates are invalid, or optional data is unavailable.
+### Notes
+- Telemetry remains optional and can be disabled at any time.
+- Map links are skipped automatically if Dynmap/BlueMap are not installed.
 
 ## [1.6.1] - 2026-02-21
 
