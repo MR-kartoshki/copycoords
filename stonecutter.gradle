@@ -9,7 +9,12 @@ tasks.register("buildAllVersions") {
     group = "build"
     description = "Build all Stonecutter version JARs"
     
-    dependsOn ':1.21:build',
+    dependsOn ':1.20:build',
+              ':1.20.1:build',
+              ':1.20.2:build',
+              ':1.20.3:build',
+              ':1.20.4:build',
+              ':1.21:build',
               ':1.21.1:build',
               ':1.21.2:build',
               ':1.21.3:build',
@@ -30,7 +35,7 @@ tasks.register("publishAllModrinth") {
     description = "Publish remapped jars for all Stonecutter targets to Modrinth (remapJar only)"
 
     def versions = [
-        '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
+        '1.20', '1.20.1', '1.20.2', '1.20.3', '1.20.4', '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
         '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11'
     ]
 
@@ -43,7 +48,7 @@ tasks.register("publishAllModrinth") {
 
 // Configure each Stonecutter subproject's Modrinth upload at configuration time
 // (configure the :<version>:modrinth TASK where available; guarded to skip missing tasks)
-[ '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
+[ '1.20', '1.20.1', '1.20.2', '1.20.3', '1.20.4', '1.21', '1.21.1', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6',
   '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11' ].each { v ->
     def p = project(":${v}")
 
