@@ -8,8 +8,8 @@ All notable changes to CopyCoords will be documented in this file.
 - **Optional map links** for coordinate output.
   - New optional templates for Dynmap, BlueMap, and generic web maps.
   - Available in Mod Menu and disabled by default.
-- **Telemetry toggle in Mod Menu**.
-
+- **Telemetry**.
+  - Check Notes for more
 ### Changed
 - **Config and data files moved** under `config/copycoords/`:
   - `copycoords.json`
@@ -17,7 +17,7 @@ All notable changes to CopyCoords will be documented in this file.
 - Existing files in the old `config/` root are migrated automatically.
 
 ### Notes
-- Telemetry remains optional and can be disabled at any time.
+- Telemetry is optional and can be disabled at any time.
 - Map links are skipped automatically if Dynmap/BlueMap are not installed.
 
 ## [1.6.1] - 2026-02-21
