@@ -20,8 +20,9 @@ Whether you're coordinating builds across dimensions, sharing base locations in 
 - **Multiple coordinate formats** - Space-separated, brackets, or XYZ labels. Pick your style.
 - **8 languages** - English, Spanish, French, German, Chinese, Japanese, Portuguese, Russian.
 - **Customizable in-game** - Open Mod Menu to tweak settings without editing JSON.
+- **Optional map links** - Add clickable Dynmap/BlueMap/web-map links next to coordinates (manual config, disabled by default).
 
-###### This mod collects anonymous usage statistics. No personal data is collected. This can be disabled by modifying the config at `config/copycoords/telemetry.json`
+###### This mod collects anonymous usage statistics. No personal data is collected. This can be disabled in Mod Menu or by editing `config/copycoords/telemetry.json`.
 
 ## Coordinate Conversion
 
@@ -81,14 +82,25 @@ All keybinds can be customized in **Options → Controls → Key Binds → CopyC
 
 ## Configuration
 
-Config is at `%APPDATA%/.minecraft/config/copycoords.json`. But honestly, just use Mod Menu to configure everything - it's easier.
+Main config is at `%APPDATA%/.minecraft/config/copycoords/copycoords.json`.
+
+Data/history config is at `%APPDATA%/.minecraft/config/copycoords/copycoords-data.json`.
+
+Telemetry config is at `%APPDATA%/.minecraft/config/copycoords/telemetry.json`.
+
+Most options are easiest to configure with Mod Menu.
 
 ```json
 {
   "copyToClipboard": true,
   "copyConvertedToClipboard": true,
   "showDimensionInCoordinates": true,
-  "coordinateFormat": "space"
+  "pasteToChatInput": false,
+  "coordinateFormat": "space",
+  "mapLinksEnabled": false,
+  "dynmapUrlTemplate": "http://localhost:8123/?world={world}&map=flat&x={x}&y={y}&z={z}",
+  "bluemapUrlTemplate": "http://localhost:8100/#world:{world}:{x}:{y}:{z}:150:0:0:0:0:perspective",
+  "webMapUrlTemplate": ""
 }
 ```
 
@@ -102,6 +114,40 @@ Config is at `%APPDATA%/.minecraft/config/copycoords.json`. But honestly, just u
   - `"space"` - `100 64 200`
   - `"bracket"` - `[100, 64, 200]`
   - `"xyz"` - `X:100 Y:64 Z:200`
+- `mapLinksEnabled` - If `true`, appends clickable map links to coordinate chat output.
+- `dynmapUrlTemplate` - URL template used for Dynmap links (only shown if Dynmap mod is present).
+- `bluemapUrlTemplate` - URL template used for BlueMap links (only shown if BlueMap mod is present).
+- `webMapUrlTemplate` - Generic custom map URL template (always optional).
+
+### Map link template placeholders
+
+Available placeholders for map URL templates:
+
+- `{x}` `{y}` `{z}` - block coordinates
+- `{world}` - default world slug from dimension (`world`, `world_nether`, `world_the_end`)
+- `{worldEncoded}` - URL-encoded world value
+- `{dimension}` - raw dimension id string
+- `{dimensionEncoded}` - URL-encoded dimension id
+
+Notes:
+
+- Map links are off by default and require `mapLinksEnabled: true`.
+- Invalid or non-http(s) URLs are ignored safely.
+- If Dynmap or BlueMap is not installed, their corresponding links are skipped without errors.
+
+### Telemetry config
+
+Telemetry settings are stored separately in `config/copycoords/telemetry.json`.
+
+```json
+{
+  "enabled": true,
+  "lastSent": 0
+}
+```
+
+- `enabled` - opt out by setting to `false` (also available in Mod Menu).
+- `lastSent` - internal rate-limit timestamp managed automatically.
 
 ## Languages & Platforms
 

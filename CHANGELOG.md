@@ -2,6 +2,28 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.7.0] - 2026-02-21
+
+### Added
+- **Client-only telemetry pipeline** with strict privacy payload (`mc`, `e`, `l`, `m`) and async HTTP sender.
+- **Telemetry config file** at `config/copycoords/telemetry.json` with opt-out support (`enabled: false`).
+- **Mod Menu telemetry toggle** to enable or disable telemetry in-game.
+- **Map integration links (manual config)** for coordinate outputs.
+  - New optional templates for Dynmap, BlueMap, and generic web maps.
+  - Disabled by default and only active when explicitly enabled in config.
+
+### Changed
+- **Config/data storage paths** moved under `config/copycoords/`:
+  - `copycoords.json`
+  - `copycoords-data.json`
+- Added automatic legacy fallback/migration from old root `config/` file locations.
+- Telemetry endpoint is now hardcoded; endpoint/client-id settings are no longer user-configurable.
+
+### Safety
+- Telemetry send is fully asynchronous and never blocks the Minecraft main thread.
+- Telemetry only marks successful send windows after successful HTTP completion.
+- Map links fail safely when Dynmap/BlueMap are not installed, templates are invalid, or optional data is unavailable.
+
 ## [1.6.1] - 2026-02-21
 
 ### Fixed
@@ -39,63 +61,6 @@ All notable changes to CopyCoords will be documented in this file.
   - Improved KeyMapping constructor compatibility detection with better fallback handling
   - Changed error messages to help identify constructor availability issues
   - Keybinds now register gracefully if some fail
-
-## [1.4.0] - 2026-02-19
-
-### Added
- - **Cross-Platform Clipboard Support** — clipboard functions now work on Windows, macOS, and Linux
-  - Windows: Uses `clip.exe` (built-in)
-  - macOS: Uses `pbcopy` (built-in)
-  - Linux: Uses `xclip` or `xsel` (install via package manager)
-- **Dimension Indicator** — coordinates now optionally show which dimension you're in (Overworld, Nether, End)
-  - New `showDimensionInCoordinates` config option (enabled by default)
-  - Toggleable in Mod Menu
-- **Configurable Coordinate Format** — choose how coordinates are displayed
-  - Space-separated: `100 64 200` (default)
-  - Bracket-comma: `[100, 64, 200]`
-  - XYZ labels: `X:100 Y:64 Z:200`
-  - New `coordinateFormat` config option
-  - Format selector in Mod Menu
-- **Multi-Language Support** — now available in 8 languages
-  - English, Spanish, French, German
-  - Chinese (Simplified), Japanese, Portuguese (Brazilian), Russian
-  - Automatic language detection based on game settings
-- **Distance Calculator** — calculate distance and direction between two coordinate sets
-  - `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` - Calculate distance between absolute coordinates
-  - `/distcalc bookmarks [bookmark1] [bookmark2]` - Calculate distance between saved bookmarks
-  - Shows horizontal, vertical, and total 3D distance
-  - Provides bearing in degrees and cardinal direction (16-point compass)
-  - Displays Manhattan distance for reference
-
-### Fixed
-- **Client startup keybind crash on some 1.21.11 environments**
-  - Expanded `KeyMapping` constructor compatibility handling in keybind registration
-
-## [1.3.1] - 2026-02-18
-
-### Added
-- Multi-version build support for all Minecraft 1.21.x versions (1.21-1.21.11)
-
-## [1.3.0] - 2026-02-18
-
-### Added
-- Optional `/copycoords [goal]` to convert current coordinates to a target dimension
-- `/msgcoords [player] [goal]` to send coordinates to another player with optional conversion
-
-### Changed
-- Updated Mod Menu Mod description and authors to match those stated in the README
-- `/convertcoords` now uses the same conversion logic as `/copycoords [goal]` (dimension-aware conversion and `~` relative coordinates); output and clipboard behavior now match the mod settings
-
-## [1.2.1] - 2026-02-17
-
-### Added
-- `/convertcoords` now copies converted coordinates to clipboard (enabled by default)
-- New `copyConvertedToClipboard` config option to toggle clipboard copying for converted coordinates
-- Mod Menu toggle for the new converted coordinates clipboard setting
-- Automated release pipeline (Modrinth, CurseForge, GitHub Releases)
-
-### Changed
-- Updated README with `/convertcoords` clipboard docs and new config example
 
 ## [1.4.0] - 2026-02-19
 

@@ -84,6 +84,40 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> CopyCoords.config.pasteToChatInput = newValue)
                     .build());
 
+            ConfigCategory mapLinks = builder.getOrCreateCategory(Component.literal("Map Links"));
+
+            mapLinks.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Enable map links"),
+                            CopyCoords.config.mapLinksEnabled)
+                    .setDefaultValue(false)
+                    .setTooltip(Component.literal("If enabled, coordinate chat output includes clickable map links."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.mapLinksEnabled = newValue)
+                    .build());
+
+            mapLinks.addEntry(entryBuilder.startStrField(
+                            Component.literal("Dynmap URL template"),
+                            CopyCoords.config.dynmapUrlTemplate)
+                    .setDefaultValue("http://localhost:8123/?world={world}&map=flat&x={x}&y={y}&z={z}")
+                    .setTooltip(Component.literal("Shown only when Dynmap is installed. Placeholders: {x} {y} {z} {world} {worldEncoded} {dimension} {dimensionEncoded}"))
+                    .setSaveConsumer(newValue -> CopyCoords.config.dynmapUrlTemplate = newValue)
+                    .build());
+
+            mapLinks.addEntry(entryBuilder.startStrField(
+                            Component.literal("BlueMap URL template"),
+                            CopyCoords.config.bluemapUrlTemplate)
+                    .setDefaultValue("http://localhost:8100/#world:{world}:{x}:{y}:{z}:150:0:0:0:0:perspective")
+                    .setTooltip(Component.literal("Shown only when BlueMap is installed. Placeholders: {x} {y} {z} {world} {worldEncoded} {dimension} {dimensionEncoded}"))
+                    .setSaveConsumer(newValue -> CopyCoords.config.bluemapUrlTemplate = newValue)
+                    .build());
+
+            mapLinks.addEntry(entryBuilder.startStrField(
+                            Component.literal("Custom web map URL template"),
+                            CopyCoords.config.webMapUrlTemplate)
+                    .setDefaultValue("")
+                    .setTooltip(Component.literal("Optional always-available map link. Use http(s) URL and placeholders like {x}, {y}, {z}, {world}."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.webMapUrlTemplate = newValue)
+                    .build());
+
             ConfigCategory telemetry = builder.getOrCreateCategory(Component.literal("Telemetry"));
 
             telemetry.addEntry(entryBuilder.startBooleanToggle(

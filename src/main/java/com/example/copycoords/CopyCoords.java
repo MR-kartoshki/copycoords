@@ -13,6 +13,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.ClickEvent;
@@ -23,6 +24,8 @@ import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -204,9 +207,7 @@ public class CopyCoords implements ClientModInitializer {
         String coordString = formatCoordinates(x, y, z, dimensionId);
 
         // Print coordinates to chat with clickable component
-        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Your current coordinates are: ");
-        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
-        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
+        postCoordinateMessage("Your current coordinates are: ", coordString, x, y, z, dimensionId);
 
         // Copy to clipboard if enabled in config
         if (config.copyToClipboard) {
@@ -238,12 +239,10 @@ public class CopyCoords implements ClientModInitializer {
         String coordString = formatCoordinates(converted[0], converted[1], converted[2], dimensionId);
         
         // Display converted coordinates with clickable component
-        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
         int cx = (int) Math.floor(converted[0]);
         int cy = (int) Math.floor(converted[1]);
         int cz = (int) Math.floor(converted[2]);
-        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, cx, cy, cz, dimensionId);
-        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
+        postCoordinateMessage("Converted coordinates: ", coordString, cx, cy, cz, dimensionId);
 
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(coordString, cx, cy, cz, dimensionId);
@@ -288,12 +287,10 @@ public class CopyCoords implements ClientModInitializer {
         String out = formatCoordinates(converted[0], converted[1], converted[2], dimensionId);
         
         // Display converted coordinates with clickable component
-        net.minecraft.network.chat.MutableComponent message = net.minecraft.network.chat.Component.literal("Converted coordinates: ");
         int cx = (int) Math.floor(converted[0]);
         int cy = (int) Math.floor(converted[1]);
         int cz = (int) Math.floor(converted[2]);
-        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(out, cx, cy, cz, dimensionId);
-        Minecraft.getInstance().gui.getChat().addMessage(message.append(clickableCoord));
+        postCoordinateMessage("Converted coordinates: ", out, cx, cy, cz, dimensionId);
 
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(out, cx, cy, cz, dimensionId);
@@ -546,8 +543,9 @@ public class CopyCoords implements ClientModInitializer {
             final int clickIndex = index;
                         ClickEvent clickEvent = buildClickEvent("/coordshistory copy " + clickIndex);
                         HoverEvent hoverEvent = buildHoverEvent(Component.literal("Copy to clipboard"));
-                        Component line = Component.literal(index + ") " + coordString)
+                        net.minecraft.network.chat.MutableComponent line = Component.literal(index + ") " + coordString)
                             .withStyle(style -> applyEvents(style, clickEvent, hoverEvent));
+                        appendMapLinks(line, entry.x, entry.y, entry.z, entry.dimensionId);
             Minecraft.getInstance().gui.getChat().addMessage(line);
         }
 
@@ -624,8 +622,9 @@ public class CopyCoords implements ClientModInitializer {
             String command = "/coordbookmark copy " + quoteArgument(entry.name);
                         ClickEvent clickEvent = buildClickEvent(command);
                         HoverEvent hoverEvent = buildHoverEvent(Component.literal("Copy to clipboard"));
-                        Component line = Component.literal(entry.name + " - " + coordString)
+                        net.minecraft.network.chat.MutableComponent line = Component.literal(entry.name + " - " + coordString)
                             .withStyle(style -> applyEvents(style, clickEvent, hoverEvent));
+                        appendMapLinks(line, entry.x, entry.y, entry.z, entry.dimensionId);
             Minecraft.getInstance().gui.getChat().addMessage(line);
         }
 
@@ -756,6 +755,101 @@ public class CopyCoords implements ClientModInitializer {
         try {
             Constructor<HoverEvent> ctor = HoverEvent.class.getConstructor(HoverEvent.Action.class, Component.class);
             return ctor.newInstance(HoverEvent.Action.SHOW_TEXT, text);
+        } catch (Exception ignored) {
+        }
+
+        return null;
+    }
+
+    private void postCoordinateMessage(String prefix, String coordString, int x, int y, int z, String dimensionId) {
+        Minecraft.getInstance().gui.getChat().addMessage(buildCoordinateMessage(prefix, coordString, x, y, z, dimensionId));
+    }
+
+    static net.minecraft.network.chat.MutableComponent buildCoordinateMessage(String prefix, String coordString, int x, int y, int z, String dimensionId) {
+        net.minecraft.network.chat.MutableComponent message = Component.literal(prefix);
+        net.minecraft.network.chat.MutableComponent clickableCoord = ClickableCoordinateComponent.createClickableCoordinate(coordString, x, y, z, dimensionId);
+        message.append(clickableCoord);
+        appendMapLinks(message, x, y, z, dimensionId);
+        return message;
+    }
+
+    static void appendMapLinks(net.minecraft.network.chat.MutableComponent message, int x, int y, int z, String dimensionId) {
+        if (config == null || !config.mapLinksEnabled) {
+            return;
+        }
+
+        tryAppendLink(message, "Dynmap", config.dynmapUrlTemplate, x, y, z, dimensionId, FabricLoader.getInstance().isModLoaded("dynmap"));
+        tryAppendLink(message, "BlueMap", config.bluemapUrlTemplate, x, y, z, dimensionId, FabricLoader.getInstance().isModLoaded("bluemap"));
+        tryAppendLink(message, "Map", config.webMapUrlTemplate, x, y, z, dimensionId, true);
+    }
+
+    private static void tryAppendLink(net.minecraft.network.chat.MutableComponent message,
+                                      String label,
+                                      String template,
+                                      int x,
+                                      int y,
+                                      int z,
+                                      String dimensionId,
+                                      boolean available) {
+        if (!available || template == null || template.isBlank()) {
+            return;
+        }
+
+        try {
+            String world = getMapWorldName(dimensionId);
+            String encodedWorld = URLEncoder.encode(world, StandardCharsets.UTF_8);
+            String encodedDimension = URLEncoder.encode(dimensionId == null ? "" : dimensionId, StandardCharsets.UTF_8);
+            String url = template.trim()
+                    .replace("{x}", Integer.toString(x))
+                    .replace("{y}", Integer.toString(y))
+                    .replace("{z}", Integer.toString(z))
+                    .replace("{world}", world)
+                    .replace("{worldEncoded}", encodedWorld)
+                    .replace("{dimension}", dimensionId == null ? "" : dimensionId)
+                    .replace("{dimensionEncoded}", encodedDimension);
+
+            if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+                return;
+            }
+
+            ClickEvent clickEvent = buildOpenUrlClickEvent(url);
+            HoverEvent hoverEvent = buildHoverEvent(Component.literal("Open " + label + " link"));
+            net.minecraft.network.chat.MutableComponent link = Component.literal(" [" + label + "]")
+                    .withStyle(style -> applyEvents(style, clickEvent, hoverEvent));
+            message.append(link);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String getMapWorldName(String dimensionId) {
+        if (dimensionId == null) {
+            return "world";
+        }
+        if (dimensionId.equals(NETHER_ID)) {
+            return "world_nether";
+        }
+        if (dimensionId.equals(END_ID)) {
+            return "world_the_end";
+        }
+        return "world";
+    }
+
+    private static ClickEvent buildOpenUrlClickEvent(String url) {
+        try {
+            Method openUrl = ClickEvent.class.getDeclaredMethod("openUrl", String.class);
+            return (ClickEvent) openUrl.invoke(null, url);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Class<?> openUrlClass = Class.forName("net.minecraft.network.chat.ClickEvent$OpenUrl");
+            return (ClickEvent) openUrlClass.getConstructor(String.class).newInstance(url);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Constructor<ClickEvent> ctor = ClickEvent.class.getConstructor(ClickEvent.Action.class, String.class);
+            return ctor.newInstance(ClickEvent.Action.OPEN_URL, url);
         } catch (Exception ignored) {
         }
 
