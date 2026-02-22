@@ -2,15 +2,19 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.8.0] - 2026-02-21
+
+### Added
+- **Custom coordinate template** – users can now specify a format string that overrides the built‑in `coordinateFormat`.
+  - Placeholders: `{x}`, `{y}`, `{z}`, `{dimension}`, `{dimName}`.
+  - The template field shows a live preview in its tooltip while editing.
+
 ## [1.7.0] - 2026-02-21
 
 ### Added
 - **Optional map links** for coordinate output.
   - New optional templates for Dynmap, BlueMap, and generic web maps.
   - Available in Mod Menu and disabled by default.
-- **Custom coordinate template** – users can now specify a format string that overrides the built‑in `coordinateFormat`.
-  - Placeholders: `{x}`, `{y}`, `{z}`, `{dimension}`, `{dimName}`.
-  - Live preview appears in the entry's tooltip as you edit.
 - **Telemetry**.
   - Check Notes for more
 ### Changed
