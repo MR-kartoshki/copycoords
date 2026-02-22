@@ -17,6 +17,7 @@ public class CopyCoordsConfig {
     public boolean showDimensionInCoordinates = true;
     public boolean pasteToChatInput = false; // if true, paste coords into chat input instead of (or in addition to) clipboard
     public String coordinateFormat = "space"; // "space", "bracket", or "xyz"
+    public String coordinateTemplate = ""; // optional custom format, overrides coordinateFormat when nonempty
     public boolean mapLinksEnabled = false;
     public String dynmapUrlTemplate = "http://localhost:8123/?world={world}&map=flat&x={x}&y={y}&z={z}";
     public String bluemapUrlTemplate = "http://localhost:8100/#world:{world}:{x}:{y}:{z}:150:0:0:0:0:perspective";

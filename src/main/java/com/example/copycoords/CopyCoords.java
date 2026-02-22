@@ -8,6 +8,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.example.copycoords.telemetry.TelemetryBootstrap;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -44,6 +45,7 @@ public class CopyCoords implements ClientModInitializer {
     public void onInitializeClient() {
         config = CopyCoordsConfig.load();
         dataStore = CopyCoordsDataStore.load();
+        TelemetryBootstrap.initAndMaybeSend();
         CopyCoordsBind.register();
         // Register the /copycoords and /convertcoords commands with Brigadier
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -435,8 +437,13 @@ public class CopyCoords implements ClientModInitializer {
         return dimensionId;
     }
 
-    // Helper method to format coordinates with optional dimension and precision
+    // Helper method to format coordinates with optional dimension and precision or custom template
     static String formatCoordinates(double x, double y, double z, String dimensionId) {
+        // template override takes precedence
+        if (config != null && config.coordinateTemplate != null && !config.coordinateTemplate.isBlank()) {
+            return applyTemplate(config.coordinateTemplate, x, y, z, dimensionId);
+        }
+
         // no decimal-precision option any more; just use default string conversion
         String xs = String.valueOf(x);
         String ys = String.valueOf(y);
@@ -454,6 +461,26 @@ public class CopyCoords implements ClientModInitializer {
             coordString += " (" + getDimensionNameFromId(dimensionId) + ")";
         }
         return coordString;
+    }
+
+    // Apply a custom template string, replacing placeholders with values.
+    // Supported placeholders: {x}, {y}, {z}, {dimension} and {dimName}.
+    // This is public so that configuration screens can generate a preview string.
+    public static String applyTemplate(String template, double x, double y, double z, String dimensionId) {
+        String result = template;
+        result = result.replace("{x}", String.valueOf(x));
+        result = result.replace("{y}", String.valueOf(y));
+        result = result.replace("{z}", String.valueOf(z));
+        result = result.replace("{dimension}", dimensionId == null ? "" : dimensionId);
+        result = result.replace("{dimName}", getDimensionNameFromId(dimensionId));
+        return result;
+    }
+
+    // Provide a simple preview for a template, using a canonical example coordinate set.
+    public static String previewForTemplate(String template) {
+        if (template == null || template.isBlank()) return "";
+        // use some arbitrary coordinate values and overworld
+        return applyTemplate(template, 100, 64, 200, OVERWORLD_ID);
     }
 
     static void addHistoryEntry(int x, int y, int z, String dimensionId) {

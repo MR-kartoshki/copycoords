@@ -6,6 +6,7 @@ import com.example.copycoords.telemetry.TelemetryConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import net.minecraft.network.chat.Component;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -73,6 +74,32 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                             "XYZ: X:100 Y:64 Z:200"))
                     .setSaveConsumer(newFormat -> CopyCoords.config.coordinateFormat = newFormat.getId())
                     .build());
+
+            // custom template overrides the above formats; we show preview in the tooltip
+            String initialPreview = CopyCoords.previewForTemplate(CopyCoords.config.coordinateTemplate);
+            final Object[] templateEntryRef = new Object[1];
+            Object templateEntryObj = entryBuilder.startStrField(
+                            Component.literal("Coordinate template"),
+                            CopyCoords.config.coordinateTemplate)
+                    .setDefaultValue("")
+                    .setTooltip(Component.literal("Empty to use Coordinate format above. Placeholders: {x},{y},{z},{dimension},{dimName}" +
+                            (initialPreview.isEmpty() ? "" : "\nPreview: " + initialPreview)))
+                    .setSaveConsumer(newValue -> {
+                        CopyCoords.config.coordinateTemplate = newValue;
+                        // attempt to update tooltip via reflection
+                        try {
+                            Object entry = templateEntryRef[0];
+                            entry.getClass()
+                                    .getMethod("setTooltip", Component.class)
+                                    .invoke(entry, Component.literal("Empty to use Coordinate format above. Placeholders: {x},{y},{z},{dimension},{dimName}" +
+                                            (CopyCoords.previewForTemplate(newValue).isEmpty() ? "" : "\nPreview: " + CopyCoords.previewForTemplate(newValue))));
+                        } catch (Throwable ignored) {
+                            // ignore; tooltip will be correct when screen reopened
+                        }
+                    })
+                    .build();
+            templateEntryRef[0] = templateEntryObj;
+            general.addEntry((AbstractConfigListEntry<?>)templateEntryObj);
 
 
             // Paste to chat input option
