@@ -54,10 +54,11 @@ Main options:
 - `copyConvertedToClipboard`
 - `showDimensionInCoordinates`
 - `pasteToChatInput`
+- `instantChatEnabled`
 - `coordinateFormat` (`space`, `bracket`, `xyz`)
-- **new** `coordinateTemplate` (custom format string, overrides `coordinateFormat` when non‑empty)
-
-  You can use placeholders `{x}`, `{y}`, `{z}`, `{dimension}`, and `{dimName}`.  A live preview appears in the template field's tooltip as you edit.
+- `coordinateTemplate` (custom format string, overrides `coordinateFormat` when non‑empty)
+  - You can use placeholders `{x}`, `{y}`, `{z}`, `{dimension}`, and `{dimName}`.  
+  - A live preview appears in the template field's tooltip as you edit.
 
 ### Map links
 

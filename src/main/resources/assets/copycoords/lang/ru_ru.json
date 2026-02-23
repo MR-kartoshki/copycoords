@@ -14,6 +14,8 @@
   "option.copycoords.coordinateTemplate@Tooltip": "Введите пользовательский формат координат. Заполнители: {x}, {y}, {z}, {dimension}, {dimName}. Оставьте пустым, чтобы использовать выбранный выше формат. Просмотр отображается при редактировании.",
   "option.copycoords.pasteToChatInput": "Вставлять координаты в чат",
   "option.copycoords.pasteToChatInput@Tooltip": "Если включено, скопированные координаты будут помещены в поле ввода чата вместо отправки или копирования.",
+  "option.copycoords.instantChatEnabled": "Включить мгновенную отправку в чат",
+  "option.copycoords.instantChatEnabled@Tooltip": "Если включено, /cc и /copycoords также отправляют вывод координат в чат сервера.",
   "option.copycoords.coordinateFormat@Tooltip": "Выберите способ отображения координат: Пробел (100 64 200), Скобки ([100, 64, 200]) или XYZ (X:100 Y:64 Z:200).",
 
   "message.copycoords.command.no_player": "Не удается прочитать позицию - игрок не загружен.",

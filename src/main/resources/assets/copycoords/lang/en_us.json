@@ -4,6 +4,7 @@
   "key.copycoords.copy": "Copy Coordinates",
   "key.copycoords.copy_converted": "Copy Converted Coordinates",
   "key.copycoords.copy_with_dimension": "Copy Coordinates with Dimension",
+  "key.copycoords.instant_chat_send": "Instant Chat Send",
   "title.copycoords.config": "CopyCoords Configuration",
   "option.copycoords.copyToClipboard": "Copy coordinates to clipboard",
   "option.copycoords.copyToClipboard@Tooltip": "Whether /copycoords copies your coordinates to the system clipboard after sending the chat message.",

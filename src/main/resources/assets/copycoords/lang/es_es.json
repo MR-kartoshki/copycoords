@@ -14,6 +14,8 @@
   "option.copycoords.coordinateTemplate@Tooltip": "Introduzca un formato de coordenadas personalizado. Marcadores: {x}, {y}, {z}, {dimension}, {dimName}. Deje vacío para usar el formato seleccionado arriba. Vista previa mostrada al editar.",
   "option.copycoords.pasteToChatInput": "Pegar coordenadas en el chat",
   "option.copycoords.pasteToChatInput@Tooltip": "Si está activado, las coordenadas copiadas se colocarán en el cuadro de entrada de chat en lugar de enviarlas o copiarlas.",
+  "option.copycoords.instantChatEnabled": "Activar envío instantáneo al chat",
+  "option.copycoords.instantChatEnabled@Tooltip": "Si está activado, /cc y /copycoords también enviarán su salida de coordenadas al chat del servidor.",
   "option.copycoords.coordinateFormat@Tooltip": "Elige cómo se muestran las coordenadas: Espacio (100 64 200), Corchetes ([100, 64 200]) o XYZ (X:100 Y:64 Z:200).",
 
   "message.copycoords.command.no_player": "No se puede leer la posición – no hay jugador cargado.",

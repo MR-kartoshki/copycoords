@@ -14,6 +14,8 @@
   "option.copycoords.coordinateTemplate@Tooltip": "カスタム座標フォーマットを入力します。プレースホルダー：{x}、{y}、{z}、{dimension}、{dimName}。空にすると上で選択した形式を使用します。編集時にプレビューが表示されます。",
   "option.copycoords.pasteToChatInput": "座標をチャット入力に貼り付け",
   "option.copycoords.pasteToChatInput@Tooltip": "有効にすると、コピーした座標は送信やコピーの代わりにチャット入力欄に挿入されます。",
+  "option.copycoords.instantChatEnabled": "チャットへの即時送信を有効化",
+  "option.copycoords.instantChatEnabled@Tooltip": "有効にすると、/cc と /copycoords の座標出力もサーバーチャットに送信されます。",
   "option.copycoords.coordinateFormat@Tooltip": "座標の表示方法を選択します: スペース (100 64 200)、ブラケット ([100, 64, 200])、XYZ (X:100 Y:64 Z:200)。",
   "message.copycoords.command.no_player": "位置を読み込めません。プレイヤーが読み込まれていません。",
   "message.copycoords.command.coords_printed": "現在の座標: %s",

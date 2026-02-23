@@ -102,6 +102,11 @@ public class CopyCoords implements ClientModInitializer {
             cc.then(copyGoalArg);
             dispatcher.register(cc);
 
+            LiteralArgumentBuilder<FabricClientCommandSource> copycoordinates = ClientCommandManager.literal("copycoordinates");
+            copycoordinates.executes(context -> executeCopyCoords(context));
+            copycoordinates.then(copyGoalArg);
+            dispatcher.register(copycoordinates);
+
             LiteralArgumentBuilder<FabricClientCommandSource> msg = ClientCommandManager.literal("msgcoords");
             RequiredArgumentBuilder<FabricClientCommandSource, String> playerArg =
                 ClientCommandManager.argument("player", StringArgumentType.word())
@@ -179,6 +184,66 @@ public class CopyCoords implements ClientModInitializer {
         });
     }
 
+    private static void sendChatLine(ClientPacketListener connection, String line) {
+        Throwable firstError = null;
+        try {
+            Method sendChatMessage = connection.getClass().getMethod("sendChatMessage", String.class);
+            sendChatMessage.invoke(connection, line);
+            return;
+        } catch (Throwable ignored) {
+            firstError = ignored;
+        }
+
+        try {
+            Method sendChat = connection.getClass().getMethod("sendChat", String.class);
+            sendChat.invoke(connection, line);
+        } catch (Throwable ignored) {
+            reportInstantSendFailure(Minecraft.getInstance(), "chat send reflection failed", firstError != null ? firstError : ignored);
+        }
+    }
+
+    private static void maybeInstantSendCommandOutput(String text) {
+        if (config == null || !config.instantChatEnabled || text == null || text.isBlank()) {
+            return;
+        }
+
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.player == null) {
+            return;
+        }
+
+        ClientPacketListener connection = client.getConnection();
+        if (connection == null) {
+            return;
+        }
+
+        String trimmed = text.trim();
+        if (trimmed.startsWith("/")) {
+            String command = trimmed.substring(1).trim();
+            if (!command.isEmpty()) {
+                connection.sendCommand(command);
+            }
+            return;
+        }
+
+        sendChatLine(connection, trimmed);
+    }
+
+    private static void reportInstantSendFailure(Minecraft client, String prefix, Throwable error) {
+        if (client == null || client.player == null) {
+            return;
+        }
+
+        String details = "unknown";
+        if (error != null && error.getMessage() != null && !error.getMessage().isBlank()) {
+            details = error.getMessage();
+        } else if (error != null) {
+            details = error.getClass().getSimpleName();
+        }
+
+        client.gui.getChat().addMessage(Component.literal("[CopyCoords] Instant send failed: " + prefix + " (" + details + ")"));
+    }
+
     private int executeCopyCoords(CommandContext<FabricClientCommandSource> context) {
         Player player = Minecraft.getInstance().player;
 
@@ -194,6 +259,7 @@ public class CopyCoords implements ClientModInitializer {
         String coordString = formatCoordinates(x, y, z, dimensionId);
 
         postCoordinateMessage("Your current coordinates are: ", coordString, x, y, z, dimensionId);
+        maybeInstantSendCommandOutput(coordString);
 
         if (config.copyToClipboard) {
             copyToClipboardWithFeedback(coordString, x, y, z, dimensionId);
@@ -226,6 +292,7 @@ public class CopyCoords implements ClientModInitializer {
         int cy = (int) Math.floor(converted[1]);
         int cz = (int) Math.floor(converted[2]);
         postCoordinateMessage("Converted coordinates: ", coordString, cx, cy, cz, dimensionId);
+        maybeInstantSendCommandOutput(coordString);
 
         if (config.copyConvertedToClipboard) {
             copyToClipboardWithFeedback(coordString, cx, cy, cz, dimensionId);

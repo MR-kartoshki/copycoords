@@ -2,7 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.8.2] - 2026-02.23
+## [1.9.0] - 2026-02.23
+
+### Added
+- Instant‑chat option 
+  – new config toggle (instantChatEnabled) and `/cc` / `/copycoords` behaviour: when turned on the command output is also sent to the server chat.
 
 ### Fixed
 - Telemetry always reported version **1.21.11** because it read the version baked into the development jar; now uses `FabricLoader.getGameVersion()` so reports the actual running game version.

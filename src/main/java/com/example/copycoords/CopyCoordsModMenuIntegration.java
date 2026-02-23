@@ -102,6 +102,14 @@ public class CopyCoordsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(newValue -> CopyCoords.config.pasteToChatInput = newValue)
                     .build());
 
+            general.addEntry(entryBuilder.startBooleanToggle(
+                            Component.literal("Enable instant chat send"),
+                            CopyCoords.config.instantChatEnabled)
+                    .setDefaultValue(false)
+                    .setTooltip(Component.literal("If enabled, /cc and /copycoords also send their coordinate output to server chat."))
+                    .setSaveConsumer(newValue -> CopyCoords.config.instantChatEnabled = newValue)
+                    .build());
+
             ConfigCategory mapLinks = builder.getOrCreateCategory(Component.literal("Map Links"));
 
             mapLinks.addEntry(entryBuilder.startBooleanToggle(

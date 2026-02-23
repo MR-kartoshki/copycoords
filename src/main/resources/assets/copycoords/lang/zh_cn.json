@@ -14,6 +14,8 @@
   "option.copycoords.coordinateTemplate@Tooltip": "输入自定义坐标格式。占位符：{x}, {y}, {z}, {dimension}, {dimName}。留空以使用上面选择的格式。编辑时显示预览。",
   "option.copycoords.pasteToChatInput": "将坐标粘贴到聊天输入",
   "option.copycoords.pasteToChatInput@Tooltip": "启用后，复制的坐标将放入聊天输入框，而不是发送或复制。",
+  "option.copycoords.instantChatEnabled": "启用即时发送到聊天",
+  "option.copycoords.instantChatEnabled@Tooltip": "启用后，/cc 和 /copycoords 的坐标输出也会发送到服务器聊天。",
   "option.copycoords.coordinateFormat@Tooltip": "选择坐标显示方式：空格 (100 64 200)、方括号 ([100, 64, 200]) 或 XYZ (X:100 Y:64 Z:200)。",
   "message.copycoords.command.no_player": "无法读取位置 - 没有加载玩家。",
   "message.copycoords.command.coords_printed": "你的当前坐标为: %s",

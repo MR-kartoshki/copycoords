@@ -3,6 +3,8 @@ package com.example.copycoords;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -14,6 +16,8 @@ public class CopyCoordsConfig {
     public boolean copyToClipboard = true;
     public boolean copyConvertedToClipboard = true;
     public boolean showDimensionInCoordinates = true;
+    // disabled by default to avoid unexpected chat spam
+    public boolean instantChatEnabled = false;
     public boolean pasteToChatInput = false;
     public String coordinateFormat = "space";
     public String coordinateTemplate = "";
@@ -50,8 +54,17 @@ public class CopyCoordsConfig {
         if (Files.exists(readPath)) {
             try {
                 String json = Files.readString(readPath);
+                JsonObject raw = null;
+                try {
+                    raw = JsonParser.parseString(json).getAsJsonObject();
+                } catch (Throwable ignored) {
+                }
+
                 CopyCoordsConfig config = GSON.fromJson(json, CopyCoordsConfig.class);
                 if (config != null) {
+                    if (raw == null || !raw.has("instantChatEnabled")) {
+                        config.instantChatEnabled = true;
+                    }
                     if (!configPath.equals(readPath)) {
                         config.save();
                     }
