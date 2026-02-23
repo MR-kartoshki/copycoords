@@ -28,10 +28,16 @@ public final class TelemetryBootstrap {
                 return;
             }
 
+            // `getModContainer("minecraft")` returns the version baked into the
+            // development jar, which in my workspace is always 1.21.11.  That means
+            // when running the mod against an older or newer game the telemetry
+            // payload would still claim 1.21.11.  The loader provides a direct
+            // getter for the *running* game version which is what we really want.
             String minecraftVersion = FabricLoader.getInstance()
-                    .getModContainer("minecraft")
-                    .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                    .orElse("unknown");
+                    .getGameVersion()
+                    .getFriendlyString();
+            // log so we can verify in the game log which version was detected
+            System.out.println("CopyCoords: detected Minecraft version " + minecraftVersion);
 
             JsonObject payload = new JsonObject();
             payload.addProperty("mc", minecraftVersion);
