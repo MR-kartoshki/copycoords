@@ -2,6 +2,11 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.10.1] - 2026-02-24
+
+### Fixed
+- Instant chat send now uses direct chat sending instead of reflection, preventing `sendChatMessage(java.lang.String)` reflection failures in-game.
+
 ## [1.10.0] - 2026-02-24
 
 ### Added

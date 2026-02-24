@@ -185,21 +185,11 @@ public class CopyCoords implements ClientModInitializer {
     }
 
     private static boolean sendChatLine(ClientPacketListener connection, String line) {
-        Throwable firstError = null;
         try {
-            Method sendChatMessage = connection.getClass().getMethod("sendChatMessage", String.class);
-            sendChatMessage.invoke(connection, line);
+            connection.sendChat(line);
             return true;
-        } catch (Throwable ignored) {
-            firstError = ignored;
-        }
-
-        try {
-            Method sendChat = connection.getClass().getMethod("sendChat", String.class);
-            sendChat.invoke(connection, line);
-            return true;
-        } catch (Throwable ignored) {
-            reportInstantSendFailure(Minecraft.getInstance(), "chat send reflection failed", firstError != null ? firstError : ignored);
+        } catch (Throwable error) {
+            reportInstantSendFailure(Minecraft.getInstance(), "chat send failed", error);
             return false;
         }
     }
