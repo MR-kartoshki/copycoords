@@ -17,6 +17,7 @@ public class CopyCoordsBind {
     private static KeyMapping copyKeyBinding;
     private static KeyMapping copyConvertedKeyBinding;
     private static KeyMapping copyWithDimensionKeyBinding;
+    private static KeyMapping instantChatSendKeyBinding;
 
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath("copycoords", "keybinds"));
@@ -35,6 +36,8 @@ public class CopyCoordsBind {
                 createKeyMapping("key.copycoords.copy_converted", GLFW.GLFW_KEY_V));
         copyWithDimensionKeyBinding = KeyBindingHelper.registerKeyBinding(
                 createKeyMapping("key.copycoords.copy_with_dimension", GLFW.GLFW_KEY_B));
+        instantChatSendKeyBinding = KeyBindingHelper.registerKeyBinding(
+                createKeyMapping("key.copycoords.instant_chat_send", InputConstants.UNKNOWN.getValue()));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (copyKeyBinding != null) {
@@ -50,6 +53,11 @@ public class CopyCoordsBind {
             if (copyWithDimensionKeyBinding != null) {
                 while (copyWithDimensionKeyBinding.consumeClick()) {
                     executeKeybindCopyWithDimension(client);
+                }
+            }
+            if (instantChatSendKeyBinding != null) {
+                while (instantChatSendKeyBinding.consumeClick()) {
+                    executeKeybindInstantChatSend(client);
                 }
             }
         });
@@ -182,6 +190,40 @@ public class CopyCoordsBind {
                 minecraft.gui.getChat().addMessage(CopyCoords.buildCoordinateMessage("Copied coordinates with dimension to clipboard: ", coordString, x, y, z, dimensionId));
             }
             CopyCoords.addHistoryEntry(x, y, z, dimensionId);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty()) {
+                errorMsg = e.getClass().getSimpleName();
+            }
+            minecraft.gui.getChat().addMessage(net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.failed", errorMsg));
+        }
+    }
+
+    @SuppressWarnings("null")
+    private static void executeKeybindInstantChatSend(Minecraft minecraft) {
+        net.minecraft.world.entity.player.Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+
+        int x = player.blockPosition().getX();
+        int y = player.blockPosition().getY();
+        int z = player.blockPosition().getZ();
+
+        String dimensionId = CopyCoords.getDimensionId(player);
+        String coordString = CopyCoords.formatCoordinates(x, y, z, dimensionId);
+
+        try {
+            if (CopyCoords.sendCommandOutputToChat(coordString, true)) {
+                minecraft.gui.getChat().addMessage(CopyCoords.buildCoordinateMessage(
+                        net.minecraft.network.chat.Component.translatable("message.copycoords.keybind.sent_chat").getString(),
+                        coordString,
+                        x,
+                        y,
+                        z,
+                        dimensionId));
+                CopyCoords.addHistoryEntry(x, y, z, dimensionId);
+            }
         } catch (Exception e) {
             String errorMsg = e.getMessage();
             if (errorMsg == null || errorMsg.isEmpty()) {

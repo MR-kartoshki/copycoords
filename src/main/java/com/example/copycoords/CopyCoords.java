@@ -184,12 +184,12 @@ public class CopyCoords implements ClientModInitializer {
         });
     }
 
-    private static void sendChatLine(ClientPacketListener connection, String line) {
+    private static boolean sendChatLine(ClientPacketListener connection, String line) {
         Throwable firstError = null;
         try {
             Method sendChatMessage = connection.getClass().getMethod("sendChatMessage", String.class);
             sendChatMessage.invoke(connection, line);
-            return;
+            return true;
         } catch (Throwable ignored) {
             firstError = ignored;
         }
@@ -197,36 +197,52 @@ public class CopyCoords implements ClientModInitializer {
         try {
             Method sendChat = connection.getClass().getMethod("sendChat", String.class);
             sendChat.invoke(connection, line);
+            return true;
         } catch (Throwable ignored) {
             reportInstantSendFailure(Minecraft.getInstance(), "chat send reflection failed", firstError != null ? firstError : ignored);
+            return false;
         }
     }
 
     private static void maybeInstantSendCommandOutput(String text) {
-        if (config == null || !config.instantChatEnabled || text == null || text.isBlank()) {
-            return;
+        sendCommandOutputToChat(text, false);
+    }
+
+    public static boolean sendCommandOutputToChat(String text, boolean forceSend) {
+        if (text == null || text.isBlank()) {
+            return false;
+        }
+
+        if (!forceSend && (config == null || !config.instantChatEnabled)) {
+            return false;
         }
 
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.player == null) {
-            return;
+            return false;
         }
 
         ClientPacketListener connection = client.getConnection();
         if (connection == null) {
-            return;
+            return false;
         }
 
         String trimmed = text.trim();
         if (trimmed.startsWith("/")) {
             String command = trimmed.substring(1).trim();
-            if (!command.isEmpty()) {
-                connection.sendCommand(command);
+            if (command.isEmpty()) {
+                return false;
             }
-            return;
+            try {
+                connection.sendCommand(command);
+                return true;
+            } catch (Throwable error) {
+                reportInstantSendFailure(client, "command send failed", error);
+                return false;
+            }
         }
 
-        sendChatLine(connection, trimmed);
+        return sendChatLine(connection, trimmed);
     }
 
     private static void reportInstantSendFailure(Minecraft client, String prefix, Throwable error) {

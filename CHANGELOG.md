@@ -2,6 +2,14 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.10.0] - 2026-02-24
+
+### Added
+- New keybind: **Instant Chat Send**.
+  - Sends your current coordinates directly to server chat.
+  - Works even when `instantChatEnabled` is disabled.
+  - Not bound to a key by default
+
 ## [1.9.1] - 2026-02.23
 
 ### Fixed (warning: nerdy)

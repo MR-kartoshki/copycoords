@@ -13,6 +13,7 @@ CopyCoords is a client-side Fabric mod that makes coordinates faster to copy, co
   - `C` copy current coordinates
   - `V` copy converted coordinates
   - `B` copy with dimension name
+  - `Unbound by default` (sends current coordinates directly to server chat)
 - Optional map links (Dynmap/BlueMap/custom web map)
 
 ## Installation
@@ -54,11 +55,12 @@ Main options:
 - `copyConvertedToClipboard`
 - `showDimensionInCoordinates`
 - `pasteToChatInput`
-- `instantChatEnabled`
+- `instantChatEnabled` (when enabled, `/cc` and `/copycoords` also send output to server chat)
 - `coordinateFormat` (`space`, `bracket`, `xyz`)
 - `coordinateTemplate` (custom format string, overrides `coordinateFormat` when non‑empty)
   - You can use placeholders `{x}`, `{y}`, `{z}`, `{dimension}`, and `{dimName}`.  
   - A live preview appears in the template field's tooltip as you edit.
+- `Instant Chat Send` keybind (configurable in Controls, always sends current coordinates to server chat regardless of `instantChatEnabled`)
 
 ### Map links
 
