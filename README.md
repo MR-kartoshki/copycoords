@@ -91,6 +91,9 @@ CopyCoords sends minimal anonymous usage telemetry.
 - No personal data is collected.
 - Disable anytime in Mod Menu (`Telemetry -> Enable telemetry`) or by setting `enabled: false` in `config/copycoords/telemetry.json`.
 
+Full disclosure:
+https://mr-kartoshki.github.io/TelemetryDisclosure/
+
 ## License
 
 MIT. See `LICENSE`.
