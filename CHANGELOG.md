@@ -2,6 +2,28 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.11.0] - 2026-02-26
+
+### Added
+
+- Bookmark import/export command using .json files in game root directory `/coordsbookmark import`, `/coordsbookmark export`
+
+### Changed
+
+- Bookmark command is now `/coordsbookmark` (added an s) with the same subcommands and behavior as before.
+
+## [1.10.3] - 2026-02-25
+
+### Added
+
+- New config option: `decimalPlaces` (range `0-10`, default `2`) to control coordinate precision.
+
+### Changed
+
+- Coordinate output now always uses fixed precision with trailing zeros (for example, `100.00` when precision is `2`).
+- Coordinate template placeholders `{x}`, `{y}`, and `{z}` now use the same configured precision.
+- "Copy with dimension" keybind output now uses the shared coordinate formatter for consistent precision across versions.
+
 ## [1.10.2] - 2026-02-24
 
 ### Fixed

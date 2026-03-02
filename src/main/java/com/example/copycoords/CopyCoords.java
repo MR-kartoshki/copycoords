@@ -139,6 +139,7 @@ public class CopyCoords implements ClientModInitializer {
                 dispatcher.register(history);
 
                 dispatcher.register(buildBookmarkCommand("coordsbookmark", bookmarkSuggestions));
+                dispatcher.register(buildBookmarkCommand("coordbookmark", bookmarkSuggestions));
 
                 LiteralArgumentBuilder<FabricClientCommandSource> distcalc = ClientCommandManager.literal("distcalc");
                 

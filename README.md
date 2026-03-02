@@ -32,12 +32,18 @@ CopyCoords is a client-side Fabric mod that makes coordinates faster to copy, co
 - `/msgcoords [player] [overworld|nether]`
 - `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]`
 - `/distcalc bookmarks [bookmark1] [bookmark2]`
-- `/coordbookmark add <name>`
-- `/coordbookmark list`
-- `/coordbookmark copy <name>`
-- `/coordbookmark remove <name>`
-- `/coordbookmark export <file>`
-- `/coordbookmark import <file>`
+- `/coordshistory`
+- `/coordshistory list`
+- `/coordshistory copy <index>`
+- `/coordshistory remove <index>`
+- `/coordshistory menu <index>`
+- `/coordshistory clear`
+- `/coordsbookmark add <name>` (alias: `/coordbookmark`)
+- `/coordsbookmark list` (alias: `/coordbookmark list`)
+- `/coordsbookmark copy <name>` (alias: `/coordbookmark copy`)
+- `/coordsbookmark remove <name>` (alias: `/coordbookmark remove`)
+- `/coordsbookmark export <file>` (alias: `/coordbookmark export`)
+- `/coordsbookmark import <file>` (alias: `/coordbookmark import`)
 
 ## Configuration
 
