@@ -353,7 +353,8 @@ public class CopyCoords implements ClientModInitializer {
         double x = player.getX();
         double y = player.getY();
         double z = player.getZ();
-        String coordString = formatCoordinateValue(x) + " " + formatCoordinateValue(y) + " " + formatCoordinateValue(z);
+        String dimensionId = getDimensionId(player);
+        String coordString = formatCoordinates(x, y, z, dimensionId);
 
         return sendCoordsMessage(target, coordString);
     }
@@ -500,6 +501,38 @@ public class CopyCoords implements ClientModInitializer {
             return "End";
         }
         return dimensionId;
+    }
+
+    static String formatCoordinates(int x, int y, int z, String dimensionId) {
+        CopyCoordsConfig currentConfig = config;
+        if (currentConfig != null && currentConfig.coordinateTemplate != null && !currentConfig.coordinateTemplate.isBlank()) {
+            String result = currentConfig.coordinateTemplate;
+            result = result.replace("{x}", String.valueOf(x));
+            result = result.replace("{y}", String.valueOf(y));
+            result = result.replace("{z}", String.valueOf(z));
+            result = result.replace("{dimension}", dimensionId == null ? "" : dimensionId);
+            result = result.replace("{dimName}", getDimensionNameFromId(dimensionId));
+            return result;
+        }
+
+        String xs = String.valueOf(x);
+        String ys = String.valueOf(y);
+        String zs = String.valueOf(z);
+
+        CoordinateFormat format = currentConfig == null
+                ? CoordinateFormat.SPACE_SEPARATED
+                : CoordinateFormat.fromId(currentConfig.coordinateFormat);
+        String coordString;
+        switch (format) {
+            case SPACE_SEPARATED -> coordString = xs + " " + ys + " " + zs;
+            case BRACKET_COMMA -> coordString = "[" + xs + ", " + ys + ", " + zs + "]";
+            case XYZ_LABEL -> coordString = "X:" + xs + " Y:" + ys + " Z:" + zs;
+            default -> coordString = xs + " " + ys + " " + zs;
+        }
+        if (currentConfig != null && currentConfig.showDimensionInCoordinates) {
+            coordString += " (" + getDimensionNameFromId(dimensionId) + ")";
+        }
+        return coordString;
     }
 
     static String formatCoordinates(double x, double y, double z, String dimensionId) {

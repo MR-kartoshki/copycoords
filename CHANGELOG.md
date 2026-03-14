@@ -2,6 +2,14 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.12.4] - 2026-03-15
+
+### Fixed
+
+- Fixed coordinates always showing `.0` decimal suffix when using the copy-with-dimension keybind, the copy-converted keybind, and history commands. Block-position coordinates (which are always integers) are now formatted without decimal places.
+
+- Fixed `/msg` coordinate command ignoring the configured coordinate format, custom template, and dimension display settings.
+
 ## [1.12.3] - 2026-03-14
 
 ### Fixed 
