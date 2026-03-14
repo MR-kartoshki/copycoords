@@ -48,3 +48,4 @@ tmp_jarextract
 tmp_minecraft
 -Force
 search_mappings.py
+.instructions.md
