@@ -107,7 +107,7 @@ Map link placeholders:
 
 ## License
 
-MIT. See `LICENSE`.
+AGPL v3. See `LICENSE`.
 
 ## Credits
 
