@@ -371,7 +371,7 @@ tasks.named("clean").configure {
 
 // Version bump helpers.
 def bumpVersion(String part) {
-    def propsFile = file("gradle.properties")
+    def propsFile = rootProject.file("gradle.properties")
     def props = new Properties()
     propsFile.withInputStream { props.load(it) }
 
@@ -402,9 +402,11 @@ def bumpVersion(String part) {
     println("Bumped mod_version: ${v} -> ${newV}")
 }
 
-tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
-tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
-tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
+if (project == rootProject) {
+    tasks.register("bumpPatch") { doLast { bumpVersion("patch") } }
+    tasks.register("bumpMinor") { doLast { bumpVersion("minor") } }
+    tasks.register("bumpMajor") { doLast { bumpVersion("major") } }
+}
 
 // Extract only the current changelog section.
 def getCurrentChangelog() {
