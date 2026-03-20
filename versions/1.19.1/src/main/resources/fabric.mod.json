@@ -20,7 +20,7 @@
     "java": ">=17",
     "fabricloader": "*",
     "minecraft": "${mcversion}",
-    "fabric-api": "*",
+    "fabric": ">=${fabric_api}",
     "cloth-config": "*",
     "modmenu": "*"
   },

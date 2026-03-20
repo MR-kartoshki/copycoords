@@ -276,6 +276,12 @@ if (project == rootProject) {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force "net.fabricmc.fabric-api:fabric-api:${versionDeps.fabric_api}"
+    }
+}
+
 dependencies {
     // Use the active version's Minecraft
     minecraft "com.mojang:minecraft:${activeVersion}"
@@ -414,11 +420,14 @@ processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     def versionValue = project.version
     def mcversionValue = activeVersion
+    def fabricApiValue = versionDeps.fabric_api
     inputs.property "version", versionValue
     inputs.property "mcversion", mcversionValue
+    inputs.property "fabric_api", fabricApiValue
     filesMatching("fabric.mod.json") {
         expand "version": versionValue,
-                "mcversion": mcversionValue
+                "mcversion": mcversionValue,
+                "fabric_api": fabricApiValue
     }
 }
 

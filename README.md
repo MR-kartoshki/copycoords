@@ -28,7 +28,7 @@ Each release jar is built for a specific Minecraft version.
 ## Installation
 
 1. Install Fabric Loader for your Minecraft version.
-2. Install the required dependencies for that same version:
+2. Install the required dependencies **for that exact same Minecraft version** (e.g. if you are on MC 1.19, install the 1.19 variants. Do not mix, e.g. Fabric API 0.58.5+1.19.1 is incompatible with MC 1.19):
    - Fabric API
    - Cloth Config
    - Mod Menu

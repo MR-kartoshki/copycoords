@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -73,6 +74,9 @@ public class CopyCoords implements ClientModInitializer {
                 return sb.buildFuture();
             };
 
+            SuggestionProvider<FabricClientCommandSource> playerSuggestions = (pctx, psb) ->
+                SharedSuggestionProvider.suggest(pctx.getSource().getOnlinePlayerNames(), psb);
+
             RequiredArgumentBuilder<FabricClientCommandSource, String> coordArg = 
                 ClientCommandManager.argument("coordinates", StringArgumentType.greedyString())
                     .suggests(coordSuggestions)
@@ -107,6 +111,7 @@ public class CopyCoords implements ClientModInitializer {
             LiteralArgumentBuilder<FabricClientCommandSource> msg = ClientCommandManager.literal("msgcoords");
             RequiredArgumentBuilder<FabricClientCommandSource, String> playerArg =
                 ClientCommandManager.argument("player", StringArgumentType.word())
+                    .suggests(playerSuggestions)
                     .executes(context -> executeMsgCoords(context));
 
             RequiredArgumentBuilder<FabricClientCommandSource, String> msgGoalArg =

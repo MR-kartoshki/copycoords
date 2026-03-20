@@ -2,6 +2,16 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
+## [1.12.5] - 2026-03-20
+
+### Added
+
+- `/msgcoords` name suggestion
+
+### Fixed
+
+- Fixed the mod failing to start on Java 17 for Minecraft versions below 1.20.5.
+
 ## [1.12.4] - 2026-03-15
 
 ### Fixed
