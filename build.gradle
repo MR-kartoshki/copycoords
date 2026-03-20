@@ -169,9 +169,25 @@ ext.gameVersions = [
 String defaultVersion = '1.21.11'
 def scExt = project.extensions.findByName('stonecutter')
 def scVersion = scExt?.current?.version
-String activeVersion = project.findProperty('MC_VERSION')
-    ?: (scVersion ?: (ext.gameVersions.containsKey(project.name) ? project.name : defaultVersion))
+String configuredVersion = project.findProperty('MC_VERSION')?.toString()
+String projectVersion = ext.gameVersions.containsKey(project.projectDir.name) ? project.projectDir.name : null
+String activeVersion = configuredVersion ?: (projectVersion ?: (scVersion?.toString() ?: defaultVersion))
 println "Building for Minecraft version: ${activeVersion}"
+
+def java17Versions = [
+    '1.19',
+    '1.19.1',
+    '1.19.2',
+    '1.19.3',
+    '1.19.4',
+    '1.20',
+    '1.20.1',
+    '1.20.2',
+    '1.20.3',
+    '1.20.4'
+] as Set
+int requiredJavaVersion = java17Versions.contains(activeVersion) ? 17 : 21
+int requiredClassMajorVersion = requiredJavaVersion == 17 ? 61 : 65
 
 // Project metadata.
 group = project.maven_group
@@ -283,6 +299,9 @@ loom {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = requiredJavaVersion.toString()
+    targetCompatibility = requiredJavaVersion.toString()
+    options.release = requiredJavaVersion
     options.compilerArgs << "-Xlint:deprecation"
 }
 
@@ -290,56 +309,94 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register("verifyMojangMappings") {
     group = "verification"
     description = "Verifies that all projects use officialMojangMappings and not Yarn"
-    
+
     doLast {
         def allProjects = [project] + project.subprojects
         def failed = false
         def results = []
-        
-        println "="*60
+
+        println "=" * 60
         println "MAPPINGS VERIFICATION REPORT"
-        println "="*60
-        
+        println "=" * 60
+
         allProjects.each { proj ->
             def mappingConfig = proj.configurations.findByName("mappings")
             if (mappingConfig != null) {
-                def deps = mappingConfig.allDependencies.collect { 
+                def deps = mappingConfig.allDependencies.collect {
                     "${it.group}:${it.name}:${it.version}"
                 }
-                
-                // Check for yarn in dependencies
+
                 def hasYarn = deps.any { it.toLowerCase().contains("yarn") }
-                
+
                 if (hasYarn) {
                     failed = true
-                    results << "❌ FAIL: ${proj.path} uses YARN mappings!"
+                    results << "FAIL: ${proj.path} uses YARN mappings!"
                     deps.each { results << "    - ${it}" }
                 } else {
-                    results << "✓ PASS: ${proj.path} uses Mojang mappings"
+                    results << "PASS: ${proj.path} uses Mojang mappings"
                     deps.each { results << "    - ${it}" }
                 }
             }
         }
-        
+
         results.each { println it }
-        
-        println "="*60
+
+        println "=" * 60
         println "SOURCE: dependencies block declares loom.officialMojangMappings()"
         println "APPLIED TO: Root project (inherited by all Stonecutter subprojects)"
         println "VERSIONS COVERED: 1.19, 1.19.1, 1.19.2, 1.19.3, 1.19.4, 1.20, 1.20.1, 1.20.2, 1.20.3, 1.20.4, 1.20.5, 1.20.6, 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11"
-        println "="*60
-        
+        println "=" * 60
+
         if (failed) {
-            throw new GradleException("❌ MAPPINGS VERIFICATION FAILED: Yarn detected in dependencies!")
-        } else {
-            println "✅ SUCCESS: All projects use Mojang official mappings"
+            throw new GradleException("MAPPINGS VERIFICATION FAILED: Yarn detected in dependencies!")
+        }
+
+        println "SUCCESS: All projects use Mojang official mappings"
+    }
+}
+
+tasks.register("verifyCompiledBytecodeVersion") {
+    dependsOn tasks.named("classes")
+
+    doLast {
+        def classesDir = file("$buildDir/classes/java/main")
+        if (!classesDir.exists()) {
+            return
+        }
+
+        def mismatches = []
+        fileTree(classesDir).matching {
+            include "**/*.class"
+        }.each { File classFile ->
+            classFile.withInputStream { input ->
+                byte[] header = new byte[8]
+                if (input.read(header) != 8) {
+                    throw new GradleException("Failed to read class header from ${classFile}")
+                }
+
+                int majorVersion = ((header[6] & 0xFF) << 8) | (header[7] & 0xFF)
+                if (majorVersion != requiredClassMajorVersion) {
+                    mismatches << "${classFile.name}: class file version ${majorVersion}"
+                }
+            }
+        }
+
+        if (!mismatches.isEmpty()) {
+            throw new GradleException(
+                "Expected Java ${requiredJavaVersion} bytecode (class file version ${requiredClassMajorVersion}) for Minecraft ${activeVersion}, but found mismatches: ${mismatches.join(', ')}"
+            )
         }
     }
 }
 
-// Ensure build depends on mappings verification.
+tasks.matching { it.name == "verifyMojangMappings" }.configureEach { Task verifyMappingsTask ->
+    tasks.named("build").configure {
+        dependsOn verifyMappingsTask
+    }
+}
+
 tasks.named("build").configure {
-    dependsOn "verifyMojangMappings"
+    dependsOn "verifyCompiledBytecodeVersion"
 }
 
 publishing {

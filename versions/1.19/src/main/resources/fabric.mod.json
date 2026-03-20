@@ -17,7 +17,7 @@
     "modmenu": ["com.example.copycoords.CopyCoordsModMenuIntegration"]
   },
   "depends": {
-    "java": ">=21",
+    "java": ">=17",
     "fabricloader": "*",
     "minecraft": "${mcversion}",
     "fabric-api": "*",
