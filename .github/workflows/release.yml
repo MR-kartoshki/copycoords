@@ -43,13 +43,14 @@ jobs:
         run: ./gradlew writeCurrentChangelog --no-daemon
       - name: Prepare release artifact payload
         shell: bash
-        run: >
+        run: |
           set -euo pipefail
 
 
           STAGE_DIR="build/release-artifacts"
           rm -rf "$STAGE_DIR"
           mkdir -p "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR/versions"
 
           cp build/current-changelog.md "$STAGE_DIR/current-changelog.md"
 
