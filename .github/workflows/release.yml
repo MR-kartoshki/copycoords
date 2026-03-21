@@ -41,38 +41,6 @@ jobs:
         run: ./gradlew buildAllVersions --no-daemon
       - name: Extract current changelog
         run: ./gradlew writeCurrentChangelog --no-daemon
-      - name: Prepare release artifact payload
-        shell: bash
-        run: |
-          set -euo pipefail
-
-
-          STAGE_DIR="build/release-artifacts"
-          rm -rf "$STAGE_DIR"
-          mkdir -p "$STAGE_DIR"
-          mkdir -p "$STAGE_DIR/versions"
-
-          cp build/current-changelog.md "$STAGE_DIR/current-changelog.md"
-
-          while IFS= read -r jar; do
-            staged_path="$STAGE_DIR/$jar"
-            mkdir -p "$(dirname "$staged_path")"
-            cp "$jar" "$staged_path"
-          done < <(find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
-            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar')
-
-          if ! find "$STAGE_DIR/versions" -maxdepth 5 -type f -name '*.jar' | grep -q .; then
-            echo "::error::No release jars staged under $STAGE_DIR/versions"
-            exit 1
-          fi
-      - name: Upload release build output
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-build-output
-          if-no-files-found: error
-          path: |
-            build/release-artifacts/current-changelog.md
-            build/release-artifacts/versions/*/build/libs/*.jar
       - name: Discover built versions
         id: discover_built
         shell: bash
@@ -113,6 +81,7 @@ jobs:
           inputs.skip_modrinth != true)
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          DISCOVERED_VERSIONS: ${{ steps.discover_built.outputs.discovered_versions }}
         shell: bash
         run: >
           set -euo pipefail
@@ -157,7 +126,7 @@ jobs:
           fi
 
 
-          discovered_versions="${{ steps.discover_built.outputs.discovered_versions }}"
+          discovered_versions="$DISCOVERED_VERSIONS"
 
           for MC_VERSION in $discovered_versions; do
             echo "Publishing for MC version: ${MC_VERSION}"
@@ -269,18 +238,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download release build output
-        uses: actions/download-artifact@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          name: release-build-output
-          path: .
+          distribution: temurin
+          java-version: "21"
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+      - name: Build all versions
+        run: ./gradlew buildAllVersions --no-daemon
+      - name: Extract current changelog
+        run: ./gradlew writeCurrentChangelog --no-daemon
       - name: Gather release jars
         id: list
         shell: bash
         run: >
           mkdir -p build
 
-          find build/release-artifacts/versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
+          find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' > build/release-files.txt
           echo "files<<EOF" >> $GITHUB_OUTPUT
 
@@ -293,5 +268,5 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag ||
             github.ref_name }}
           target_commitish: ${{ github.sha }}
-          body_path: build/release-artifacts/current-changelog.md
+          body_path: build/current-changelog.md
           files: ${{ steps.list.outputs.files }}
