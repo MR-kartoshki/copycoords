@@ -44,12 +44,9 @@ jobs:
       - name: Discover built versions
         id: discover_built
         shell: bash
-        run: |
+        run: >
           set -euo pipefail
-
-
           VERSIONS=()
-
           if [[ -f settings.gradle ]]; then
             VERSIONS_LINE=$(grep -oP "versions\s*\([^)]*\)" settings.gradle || true)
             if [[ -n "${VERSIONS_LINE}" ]]; then
@@ -59,65 +56,61 @@ jobs:
               done < <(echo "${VERSIONS_LINE}" | grep -oP "'[^']+'|\"[^\"]+\"")
             fi
           fi
-
-
           if [[ ${#VERSIONS[@]} -eq 0 && -d versions ]]; then
             mapfile -t VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
           fi
-
-
           if [[ ${#VERSIONS[@]} -eq 0 ]]; then
             echo "::warning::No version folders found under versions/; creating fallback versions/1.21"
             mkdir -p versions/1.21
             VERSIONS=("1.21")
           fi
-
-
           echo "discovered_versions=${VERSIONS[*]}" >> "$GITHUB_OUTPUT"
-
           printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
       - name: Publish to Modrinth
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' &&
           inputs.skip_modrinth != true)
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-          DISCOVERED_VERSIONS: ${{ steps.discover_built.outputs.discovered_versions }}
         shell: bash
-        run: |
+        run: >
           set -euo pipefail
-
-
           USER_AGENT="CopyCoordsReleaseWorkflow/1.0 (+github-actions)"
-
-
+          retry_request() {
+            local attempt=1 max=3 delay=2
+            while true; do
+              "$@" && return 0 || {
+                status=$?
+                # if curl returns non-zero but we can't see HTTP code, break
+                if [[ $status -ne 22 && $status -ne 18 ]]; then
+                  return $status
+                fi
+                # read http code from output
+                break
+              }
+            done
+            return 1
+          }
+          set -euo pipefail
           if [[ -z "${MODRINTH_TOKEN:-}" ]]; then
             echo "::error::MODRINTH_TOKEN is not set"
             exit 1
           fi
-
-
           DEPS_JSON='[]'
-
           if [[ -f deps.json ]]; then
             bash .github/scripts/validate-deps.sh deps.json
             DEPS_JSON="$(jq -c '.' deps.json)"
           else
             echo "::warning::deps.json not found in repo root; uploading with empty dependencies array."
           fi
-
-
-          discovered_versions="$DISCOVERED_VERSIONS"
-
+          discovered_versions="${{ steps.discover_built.outputs.discovered_versions }}"
           for MC_VERSION in $discovered_versions; do
             echo "Publishing for MC version: ${MC_VERSION}"
-
             JAR_DIR="versions/${MC_VERSION}/build/libs"
             JARS=("${JAR_DIR}"/*.jar)
             if [[ ${#JARS[@]} -eq 0 ]]; then
               echo "No JAR files found under ${JAR_DIR}; skipping ${MC_VERSION}"
               continue
             fi
-
             PRIMARY_JAR=""
             for JAR in "${JARS[@]}"; do
               if [[ "$JAR" == *-sources.jar || "$JAR" == *-javadoc.jar || "$JAR" == *-dev.jar ]]; then
@@ -130,12 +123,10 @@ jobs:
               fi
               PRIMARY_JAR="$JAR"
             done
-
             if [[ -z "$PRIMARY_JAR" ]]; then
               echo "No primary JAR file found under ${JAR_DIR}; skipping ${MC_VERSION}"
               continue
             fi
-
             PROJECT_ID="GzPkXb2a"
             MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d= -f2-)"
             CHANGELOG="$(cat build/current-changelog.md)"
@@ -143,7 +134,6 @@ jobs:
             VERSION_NAME="CopyCoords ${MOD_VERSION} for MC ${MC_VERSION}"
             GAME_VERSIONS_JSON="$(jq -cn --arg mc "$MC_VERSION" '[$mc]')"
             FILE_PARTS_JSON='["file"]'
-
             PAYLOAD_FILE="$(mktemp)"
             jq -cn \
               --arg project_id "$PROJECT_ID" \
@@ -165,34 +155,28 @@ jobs:
                 file_parts: $file_parts,
                 dependencies: $deps
               }' > "$PAYLOAD_FILE"
-
             if ! jq -e . "$PAYLOAD_FILE" > /dev/null; then
               echo "::error::Generated Modrinth payload is invalid JSON for ${MC_VERSION}."
               cat "$PAYLOAD_FILE" || true
               exit 1
             fi
-
             LOADERS_JSON='["fabric"]'
             LOADERS_ENC="$(printf '%s' "$LOADERS_JSON" | jq -sRr @uri)"
             GAME_VERSIONS_ENC="$(jq -cn --arg mc "$MC_VERSION" '[ $mc ]' | jq -sRr @uri)"
             CHECK_URL="https://api.modrinth.com/v2/project/${PROJECT_ID}/version?loaders=${LOADERS_ENC}&game_versions=${GAME_VERSIONS_ENC}&include_changelog=false"
-
             CHECK_STATUS="$(curl -sS -o /tmp/modrinth-check.json -w "%{http_code}" \
               -H "Authorization: ${MODRINTH_TOKEN}" \
               -H "User-Agent: ${USER_AGENT}" \
               "${CHECK_URL}")"
-
             if [[ "$CHECK_STATUS" != "200" ]]; then
               echo "::error::Failed to check existing Modrinth versions for ${MC_VERSION} (HTTP ${CHECK_STATUS})."
               cat /tmp/modrinth-check.json || true
               exit 1
             fi
-
             if jq -e --arg vn "$VERSION_NUMBER" 'any(.[]; .version_number == $vn)' /tmp/modrinth-check.json > /dev/null; then
               echo "Version ${VERSION_NUMBER} already exists on Modrinth; skipping upload."
               continue
             fi
-
             echo "Uploading ${PRIMARY_JAR} for game version ${MC_VERSION} as ${VERSION_NUMBER}"
             UPLOAD_STATUS="$(curl -sS -o /tmp/modrinth-upload.json -w "%{http_code}" -X POST "https://api.modrinth.com/v2/version" \
               -H "Authorization: ${MODRINTH_TOKEN}" \
@@ -206,35 +190,6 @@ jobs:
             fi
             rm -f "$PAYLOAD_FILE"
           done
-      - name: Stage release artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          STAGING_DIR="build/release-artifacts"
-          JAR_STAGE_DIR="${STAGING_DIR}/jars"
-          mkdir -p "$JAR_STAGE_DIR"
-
-          jar_count=0
-          while IFS= read -r -d '' jar; do
-            cp "$jar" "$JAR_STAGE_DIR/"
-            jar_count=$((jar_count + 1))
-          done < <(find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
-            ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' -print0)
-
-          if [[ "$jar_count" -eq 0 ]]; then
-            echo "::error::No release jars found to publish."
-            exit 1
-          fi
-
-          cp build/current-changelog.md "${STAGING_DIR}/current-changelog.md"
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-assets
-          path: build/release-artifacts
-          if-no-files-found: error
-          retention-days: 1
   github-release:
     concurrency:
       group: release-${{ github.ref }}
@@ -247,31 +202,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Download release artifacts
-        uses: actions/download-artifact@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          name: release-assets
-          path: build/release-artifacts
+          distribution: temurin
+          java-version: "21"
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+      - name: Build all versions
+        run: ./gradlew buildAllVersions --no-daemon
+      - name: Extract current changelog
+        run: ./gradlew writeCurrentChangelog --no-daemon
       - name: Gather release jars
         id: list
         shell: bash
-        run: |
-          set -euo pipefail
-
+        run: >
           mkdir -p build
-
-          find build/release-artifacts/jars -maxdepth 1 -type f -name '*.jar' \
+          find versions/*/build/libs -maxdepth 1 -type f -name '*.jar' \
             ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' > build/release-files.txt
-
-          if [[ ! -s build/release-files.txt ]]; then
-            echo "::error::No release jars found in downloaded artifacts."
-            exit 1
-          fi
-
           echo "files<<EOF" >> $GITHUB_OUTPUT
-
           cat build/release-files.txt >> $GITHUB_OUTPUT
-
           echo "EOF" >> $GITHUB_OUTPUT
       - name: GitHub Release (attach jar)
         uses: softprops/action-gh-release@v2
@@ -279,5 +229,5 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag ||
             github.ref_name }}
           target_commitish: ${{ github.sha }}
-          body_path: build/release-artifacts/current-changelog.md
+          body_path: build/current-changelog.md
           files: ${{ steps.list.outputs.files }}
