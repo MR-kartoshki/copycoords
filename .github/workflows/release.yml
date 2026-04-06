@@ -61,27 +61,7 @@ jobs:
         id: discover_built
         shell: bash
         run: |
-          set -euo pipefail
-          VERSIONS=()
-          if [[ -f settings.gradle ]]; then
-            VERSIONS_LINE=$(grep -oP "versions\s*\([^)]*\)" settings.gradle || true)
-            if [[ -n "${VERSIONS_LINE}" ]]; then
-              while IFS= read -r v; do
-                v=${v#\'}; v=${v%\'}; v=${v#\"}; v=${v%\"}
-                VERSIONS+=("$v")
-              done < <(echo "${VERSIONS_LINE}" | grep -oP "'[^']+'|\"[^\"]+\"")
-            fi
-          fi
-          if [[ ${#VERSIONS[@]} -eq 0 && -d versions ]]; then
-            mapfile -t VERSIONS < <(find versions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V)
-          fi
-          if [[ ${#VERSIONS[@]} -eq 0 ]]; then
-            echo "::warning::No version folders found under versions/; creating fallback versions/1.21"
-            mkdir -p versions/1.21
-            VERSIONS=("1.21")
-          fi
-          echo "discovered_versions=${VERSIONS[*]}" >> "$GITHUB_OUTPUT"
-          printf 'Discovered built versions: %s\n' "${VERSIONS[*]}"
+          bash .github/scripts/discover-built-versions.sh
       - name: Publish to Modrinth
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' &&
           inputs.skip_modrinth != true)
