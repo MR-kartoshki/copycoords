@@ -3,7 +3,7 @@
   "id": "copycoords",
   "version": "${version}",
   "name": "CopyCoords",
-  "description": "CopyCoords is a small Fabric mod for Minecraft that makes it quick and easy to get, share, and convert coordinates.",
+  "description": "CopyCoords is a client-side Fabric mod that makes coordinates faster to copy, convert, and share.",
   "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)"],
   "license": "AGPL-3.0-only",
   "icon": "assets/copycoords/icon.png",
@@ -17,7 +17,7 @@
     "modmenu": ["com.example.copycoords.CopyCoordsModMenuIntegration"]
   },
   "depends": {
-    "java": ">=21",
+    "java": ">=17",
     "fabricloader": "*",
     "minecraft": "${mcversion}",
     "fabric-api": "*",
