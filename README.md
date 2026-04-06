@@ -1,116 +1,95 @@
+<div align="center">
+
 # CopyCoords
 
-CopyCoords is a client-side Fabric mod that makes coordinates faster to copy, convert, and share.
+**A client-side Fabric mod for copying, converting, and sharing coordinates.**
 
-## Supported Minecraft Versions
+[![Modrinth](https://img.shields.io/modrinth/dt/copycoordsmod?color=00AF5C&label=Downloads&logo=modrinth)](https://modrinth.com/mod/copycoordsmod)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/MR-kartoshki/copycoords)](https://github.com/MR-kartoshki/copycoords/releases)
 
-- `1.19` - `26.1.1`
+</div>
 
-Each release jar is built for a specific Minecraft version.
+---
 
 ## Features
 
-- `/copycoords` and `/cc` show your current coordinates
-- `/convertcoords` converts Overworld <-> Nether coordinates using the 8:1 ratio
-- `/msgcoords` sends your coordinates to another player
-- `/distcalc` calculates distance between two positions or bookmarks
+- `/cc` copies your current coordinates instantly
+- Overworld ↔ Nether conversion with the 8:1 ratio
+- Send coordinates to a player with `/msgcoords`
+- Distance calculator between two positions or saved bookmarks
 - Clickable coordinates in chat
-- Coordinate history with copy, insert, remove, and menu actions
-- Bookmark add/list/copy/remove/import/export commands
-- Configurable coordinate formatting, decimal precision, and templates
-- Optional map links for Dynmap, BlueMap, or custom web maps
-- Keybinds for:
-  - copying current coordinates
-  - copying converted coordinates
-  - copying coordinates with dimension
-  - instant chat send
+- Full coordinate history — copy, reinsert, or remove past entries
+- Bookmarks with import/export support
+- Map links for Dynmap, BlueMap, or any custom web map
+- Configurable format, decimal precision, and custom templates
+
+**Keybinds** (all rebindable in Controls):
+- Copy current coordinates
+- Copy converted coordinates
+- Copy coordinates with dimension label
+- Instant chat send
+
+---
+
+## Requirements
+
+| Dependency | Link |
+|------------|------|
+| Fabric Loader | [fabricmc.net](https://fabricmc.net) |
+| Fabric API | [Modrinth](https://modrinth.com/mod/fabric-api) |
+| Cloth Config | [Modrinth](https://modrinth.com/mod/cloth-config) |
+| Mod Menu | [Modrinth](https://modrinth.com/mod/modmenu) |
+
+Supports Minecraft `1.19` through `26.1.1`. Each jar targets a specific MC version.
+
+---
 
 ## Installation
 
-1. Install Fabric Loader for your Minecraft version.
-2. Install the required dependencies **for that exact same Minecraft version** (e.g. if you are on MC 1.19, install the 1.19 variants. Do not mix, e.g. Fabric API 0.58.5+1.19.1 is incompatible with MC 1.19):
-   - Fabric API
-   - Cloth Config
-   - Mod Menu
-3. Put the matching `copycoords+<mc-version>-<mod-version>.jar` in your `mods` folder.
-4. Launch the game.
+1. Install Fabric Loader.
+2. Download all four dependencies above **for your exact MC version.**
+   Mixing versions breaks things. `Fabric API 0.58.5+1.19.1` is incompatible with MC `1.19`.
+3. Drop `copycoords+<mc-version>-<mod-version>.jar` into your `mods` folder.
+4. Launch.
+
+---
 
 ## Commands
 
-- `/copycoords`
-- `/copycoords [overworld|nether]`
-- `/convertcoords [overworld|nether] [x] [y] [z]`
-- `/msgcoords [player]`
-- `/msgcoords [player] [overworld|nether]`
-- `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]`
-- `/distcalc bookmarks [bookmark1] [bookmark2]`
-- `/coordshistory`
-- `/coordshistory list`
-- `/coordshistory copy <index>`
-- `/coordshistory remove <index>`
-- `/coordshistory menu <index>`
-- `/coordshistory clear`
-- `/coordsbookmark add <name>`
-- `/coordsbookmark list`
-- `/coordsbookmark copy <name>`
-- `/coordsbookmark remove <name>`
-- `/coordsbookmark export <file>`
-- `/coordsbookmark import <file>`
-- `/coordbookmark ...` alias for bookmark commands
-- and a couple more that I forgot to list here, see the in-game command suggestions for the full list.
+| Command | Description |
+|---------|-------------|
+| `/cc` | Copy current coordinates |
+| `/copycoords [overworld\|nether]` | Copy for a specific dimension |
+| `/convertcoords [dim] [x] [y] [z]` | Convert between Overworld and Nether |
+| `/msgcoords [player]` | Send your coords to a player |
+| `/distcalc [x1] [y1] [z1] [x2] [y2] [z2]` | Distance between two points |
+| `/distcalc bookmarks [b1] [b2]` | Distance between two bookmarks |
+| `/coordshistory` | View coordinate history |
+| `/coordsbookmark add/list/copy/remove` | Manage bookmarks |
+| `/coordsbookmark export/import [file]` | Backup or restore bookmarks |
+
+See in-game command suggestions for the full list.
+
+---
 
 ## Configuration
 
-Use Mod Menu for configuration.
+Open **Mod Menu** and select CopyCoords, or edit the config files directly:
+```
+.minecraft/config/copycoords/copycoords.json
+.minecraft/config/copycoords/copycoords-data.json
+```
 
-Config files:
+**Template placeholders:** `{x}` `{y}` `{z}` `{dimension}` `{dimName}`
 
-- `%APPDATA%/.minecraft/config/copycoords/copycoords.json`
-- `%APPDATA%/.minecraft/config/copycoords/copycoords-data.json`
+**Map link placeholders:** `{x}` `{y}` `{z}` `{world}` `{worldEncoded}` `{dimension}` `{dimensionEncoded}`
 
-Main options:
+> **Instant Chat Send** is unbound by default. Set it in Controls before use.
+> If a send fails, CopyCoords prints the reason in chat.
 
-- `copyToClipboard`
-- `copyConvertedToClipboard`
-- `showDimensionInCoordinates`
-- `pasteToChatInput`
-- `instantChatEnabled`
-- `coordinateFormat`
-- `decimalPlaces`
-- `coordinateTemplate`
-- `mapLinksEnabled`
-- `dynmapUrlTemplate`
-- `bluemapUrlTemplate`
-- `webMapUrlTemplate`
-
-Instant chat send notes:
-
-- The Instant Chat Send keybind is unbound by default. Set it in Controls before use.
-- If sending fails, CopyCoords now shows an in-chat failure reason to help with troubleshooting.
-
-Template placeholders:
-
-- `{x}`
-- `{y}`
-- `{z}`
-- `{dimension}`
-- `{dimName}`
-
-Map link placeholders:
-
-- `{x}`
-- `{y}`
-- `{z}`
-- `{world}`
-- `{worldEncoded}`
-- `{dimension}`
-- `{dimensionEncoded}`
+---
 
 ## License
 
-AGPL v3. See `LICENSE`.
-
-## Credits
-
-- MR-Kartoshki
-- freddy._.fazbear
+[AGPL-3.0](LICENSE)
