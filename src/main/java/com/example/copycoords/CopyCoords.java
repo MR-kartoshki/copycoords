@@ -46,6 +46,8 @@ public class CopyCoords implements ClientModInitializer {
     private static final int RECENT_LOCAL_MESSAGE_LIMIT = 40;
     private static final String COORD_NUMBER_PATTERN = "-?\\d+(?:\\.\\d+)?";
     private static final String COORD_ARGUMENT_PATTERN = "(?:~(?:" + COORD_NUMBER_PATTERN + ")?|" + COORD_NUMBER_PATTERN + ")";
+    private static final Pattern COORD_ARGUMENT_INPUT_PATTERN = Pattern.compile("^(?:" + COORD_ARGUMENT_PATTERN + ")$");
+    private static final Pattern BOOKMARK_ADD_COORD_LABEL_PATTERN = Pattern.compile("(?i)(?<!\\w)[xyz]\\s*[:=]");
     private static final Pattern BOOKMARK_ADD_XYZ_PATTERN = Pattern.compile(
             "(?is)^(?<name>.+?)\\s+(?<coords>(?:(?<!\\w)x\\s*[:=]\\s*" + COORD_NUMBER_PATTERN
                     + "\\s*[,; ]+y\\s*[:=]\\s*" + COORD_NUMBER_PATTERN
@@ -356,9 +358,14 @@ public class CopyCoords implements ClientModInitializer {
         String coordInput = StringArgumentType.getString(context, "coordinates");
         String[] parts = coordInput.trim().split("\\s+");
 
-        x = parseCoordinate(parts.length > 0 ? parts[0] : "~", player.getX());
-        y = parseCoordinate(parts.length > 1 ? parts[1] : "~", player.getY());
-        z = parseCoordinate(parts.length > 2 ? parts[2] : "~", player.getZ());
+        try {
+            x = parseCoordinate(parts.length > 0 ? parts[0] : "~", player.getX());
+            y = parseCoordinate(parts.length > 1 ? parts[1] : "~", player.getY());
+            z = parseCoordinate(parts.length > 2 ? parts[2] : "~", player.getZ());
+        } catch (IllegalArgumentException e) {
+            sendSystemMessage(Component.translatable("message.copycoords.command.invalid_coordinates", e.getMessage()));
+            return 0;
+        }
 
         double[] converted = convertCurrentCoordsToGoal(player, goal, x, y, z);
         if (converted == null) {
@@ -513,14 +520,14 @@ public class CopyCoords implements ClientModInitializer {
                 double offset = Double.parseDouble(input.substring(1));
                 return playerCoord + offset;
             } catch (NumberFormatException e) {
-                return playerCoord;
+                throw new IllegalArgumentException("Invalid relative coordinate: " + input);
             }
         } else {
 
             try {
                 return Double.parseDouble(input);
             } catch (NumberFormatException e) {
-                return playerCoord;
+                throw new IllegalArgumentException("Invalid coordinate: " + input);
             }
         }
     }
@@ -559,9 +566,15 @@ public class CopyCoords implements ClientModInitializer {
         }
 
         try {
-            return ChatSendCompat.sendCommand(Minecraft.getInstance(), connection, "msg " + target + " " + coordString)
-                    ? Command.SINGLE_SUCCESS
-                    : 0;
+            boolean sent = ChatSendCompat.sendCommand(Minecraft.getInstance(), connection, "msg " + target + " " + coordString);
+            if (!sent) {
+                sendSystemMessage(Component.translatable(
+                        "message.copycoords.command.msg_failed",
+                        target,
+                        ChatSendCompat.getLastFailureReason()));
+                return 0;
+            }
+            return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             String errorMsg = e.getMessage();
             if (errorMsg == null || errorMsg.isEmpty()) {
@@ -866,7 +879,13 @@ public class CopyCoords implements ClientModInitializer {
             return 0;
         }
 
-        BookmarkAddRequest request = parseBookmarkAddRequest(input, player);
+        BookmarkAddRequest request;
+        try {
+            request = parseBookmarkAddRequest(input, player);
+        } catch (IllegalArgumentException e) {
+            sendSystemMessage(Component.translatable("message.copycoords.bookmark.add_failed", e.getMessage()));
+            return 0;
+        }
         if (request == null || request.name.isEmpty()) {
             sendSystemMessage(Component.literal("Bookmark name cannot be empty."));
             return 0;
@@ -902,6 +921,10 @@ public class CopyCoords implements ClientModInitializer {
             return explicitCoords;
         }
 
+        if (looksLikeExplicitBookmarkAddInput(trimmed)) {
+            throw new IllegalArgumentException("Invalid coordinate or dimension input. Use <name> <x> <y> <z> [dimension].");
+        }
+
         return new BookmarkAddRequest(trimmed, player.getX(), player.getY(), player.getZ(), getDimensionId(player));
     }
 
@@ -913,17 +936,17 @@ public class CopyCoords implements ClientModInitializer {
 
         String name = matcher.group("name").trim();
         if (name.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("Bookmark name cannot be empty.");
         }
 
         String dimensionId = parseBookmarkAddDimension(matcher.group("dimension"), getDimensionId(player));
         if (dimensionId == null && matcher.group("dimension") != null) {
-            return null;
+            throw new IllegalArgumentException("Unknown bookmark dimension: " + matcher.group("dimension").trim());
         }
 
         List<ChatCoordinateParser.DetectedCoordinate> detections = ChatCoordinateParser.detect(matcher.group("coords"), 1);
         if (detections.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("Invalid bookmark coordinates.");
         }
 
         ChatCoordinateParser.DetectedCoordinate detection = detections.get(0);
@@ -938,22 +961,55 @@ public class CopyCoords implements ClientModInitializer {
 
         String name = matcher.group("name").trim();
         if (name.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("Bookmark name cannot be empty.");
         }
 
         String dimensionId = parseBookmarkAddDimension(matcher.group("dimension"), getDimensionId(player));
         if (dimensionId == null && matcher.group("dimension") != null) {
-            return null;
+            throw new IllegalArgumentException("Unknown bookmark dimension: " + matcher.group("dimension").trim());
         }
 
         double x = parseCoordinate(matcher.group("x"), player.getX());
         double y = parseCoordinate(matcher.group("y"), player.getY());
         double z = parseCoordinate(matcher.group("z"), player.getZ());
         if (!isValidBookmarkCoordinate(x, y, z)) {
-            return null;
+            throw new IllegalArgumentException("Bookmark coordinates are out of range.");
         }
 
         return new BookmarkAddRequest(name, x, y, z, dimensionId);
+    }
+
+    private static boolean looksLikeExplicitBookmarkAddInput(String input) {
+        if (input.indexOf('[') >= 0 || input.indexOf(']') >= 0 || BOOKMARK_ADD_COORD_LABEL_PATTERN.matcher(input).find()) {
+            return true;
+        }
+
+        String[] parts = input.trim().split("\\s+");
+        if (parts.length < 4) {
+            return false;
+        }
+
+        if (hasCoordinateLikeSuffix(parts, 3, 2)) {
+            return true;
+        }
+
+        return hasCoordinateLikeSuffix(parts, 4, 3);
+    }
+
+    private static boolean hasCoordinateLikeSuffix(String[] parts, int suffixLength, int requiredCoordinateTokens) {
+        if (parts.length <= suffixLength) {
+            return false;
+        }
+
+        int start = parts.length - suffixLength;
+        int coordinateTokenCount = Math.min(3, suffixLength);
+        int matches = 0;
+        for (int i = start; i < start + coordinateTokenCount; i++) {
+            if (COORD_ARGUMENT_INPUT_PATTERN.matcher(parts[i]).matches()) {
+                matches++;
+            }
+        }
+        return matches >= requiredCoordinateTokens;
     }
 
     private String parseBookmarkAddDimension(String rawDimension, String defaultDimensionId) {

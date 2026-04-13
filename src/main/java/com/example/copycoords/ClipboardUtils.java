@@ -2,6 +2,7 @@
 package com.example.copycoords;
 
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class ClipboardUtils {
 
@@ -45,7 +46,7 @@ public class ClipboardUtils {
         ProcessBuilder pb = new ProcessBuilder("clip.exe");
         Process process = pb.start();
         try (OutputStream os = process.getOutputStream()) {
-            os.write(text.getBytes());
+            os.write(('\uFEFF' + text).getBytes(StandardCharsets.UTF_16LE));
             os.flush();
         }
         return process;
@@ -55,7 +56,7 @@ public class ClipboardUtils {
         ProcessBuilder pb = new ProcessBuilder("pbcopy");
         Process process = pb.start();
         try (OutputStream os = process.getOutputStream()) {
-            os.write(text.getBytes());
+            os.write(text.getBytes(StandardCharsets.UTF_8));
             os.flush();
         }
         return process;
@@ -81,7 +82,7 @@ public class ClipboardUtils {
         }
         
         try (OutputStream os = process.getOutputStream()) {
-            os.write(text.getBytes());
+            os.write(text.getBytes(StandardCharsets.UTF_8));
             os.flush();
         }
         return process;

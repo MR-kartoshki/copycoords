@@ -2,6 +2,7 @@ package com.example.copycoords;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -162,18 +163,31 @@ public class CopyCoordsDataStore {
         try {
             String json = Files.readString(in);
             BookmarkEntry[] arr = GSON.fromJson(json, BookmarkEntry[].class);
+            Map<String, BookmarkEntry> importedBookmarks = new LinkedHashMap<>();
             if (arr != null) {
                 for (BookmarkEntry entry : arr) {
-                    String key = normalizeName(entry.name);
-                    bookmarks.put(key, entry);
+                    BookmarkEntry sanitized = validateImportedBookmark(entry);
+                    String key = normalizeName(sanitized.name);
+                    importedBookmarks.put(key, sanitized);
                 }
-                save();
             }
+            bookmarks.putAll(importedBookmarks);
+            save();
             return true;
-        } catch (IOException e) {
+        } catch (IOException | JsonParseException | IllegalArgumentException e) {
             System.err.println("Failed to import bookmarks: " + e.getMessage());
             return false;
         }
+    }
+
+    private BookmarkEntry validateImportedBookmark(BookmarkEntry entry) {
+        if (entry == null) {
+            throw new IllegalArgumentException("Bookmark import contains a null entry.");
+        }
+        if (entry.name == null || entry.name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Bookmark import contains an entry with no name.");
+        }
+        return new BookmarkEntry(entry.name, entry.x, entry.y, entry.z, entry.dimensionId);
     }
 
     private String normalizeName(String name) {

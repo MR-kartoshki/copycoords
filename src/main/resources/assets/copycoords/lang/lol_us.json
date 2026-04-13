@@ -41,7 +41,9 @@
   "message.copycoords.command.unsupported_dimension": "CANT CONVERT COORDZ IN DIS DIMENSHUN (ONLY OVERWORLD AN NETHER R SUPPORTED).",
   "message.copycoords.bookmark.exported": "BOOKMARKZ EXPORTED TO %s",
   "message.copycoords.bookmark.export_failed": "FAILD TO EXPORT BOOKMARKZ: %s",
+  "message.copycoords.bookmark.add_failed": "FAILD TO ADD BOOKMARK: %s",
   "message.copycoords.bookmark.imported": "BOOKMARKZ IMPORTED FROM %s",
   "message.copycoords.bookmark.import_failed": "FAILD TO IMPORT BOOKMARKZ: %s",
+  "message.copycoords.command.invalid_coordinates": "BAD COORDZ: %s",
   "message.copycoords.command.msg_failed": "FAILD TO SEND COORDZ TO %s: %s"
 }

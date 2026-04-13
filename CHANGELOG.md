@@ -2,7 +2,7 @@
 
 All notable changes to CopyCoords will be documented in this file.
 
-## [1.15.1] - 2026-04-13
+## [1.16.0] - 2026-04-13
 
 ### Added
 
@@ -15,6 +15,12 @@ All notable changes to CopyCoords will be documented in this file.
 ### Fixed
 
 - Fixed the bookmark Xaero export action failing for bookmarks that stored equivalent dimension IDs in legacy or raw forms instead of Xaero's expected Overworld, Nether, or End IDs.
+- Fixed incoming chat coordinate detection registration on Minecraft `26.1.2`, which could fail at runtime because chat receive compat reflected against Fabric's concrete event implementation instead of the public event interface.
+- Fixed malformed `/coordsbookmark add <name> <coords>` and `/coordbookmark add <name> <coords>` input falling back to the player's current position instead of reporting an invalid coordinate or dimension error.
+- Fixed `/convertcoords` silently substituting the player's current coordinates when given invalid coordinate tokens.
+- Fixed bookmark import crashing or partially importing data when the JSON array contained null or malformed bookmark entries.
+- Fixed Windows clipboard writes using the JVM default charset instead of an explicit Unicode-safe encoding.
+- Fixed `/msgcoords` failing without showing the underlying chat command send reason when the send call returned `false`.
 
 ## [1.15.0] - 2026-04-10
 

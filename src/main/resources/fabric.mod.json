@@ -7,7 +7,7 @@
   "authors": ["freddy._.fazbear (Discord)","MR-Kartoshki (GitHub)"],
   "license": "AGPL-3.0-only",
   "icon": "assets/copycoords/icon.png",
-  "contact": {
+  "links": {
     "issues": "https://github.com/MR-kartoshki/copycoords/issues",
     "homepage": "https://github.com/MR-kartoshki/copycoords"
   },
